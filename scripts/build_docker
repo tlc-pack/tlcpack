@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+import os
+import subprocess
+
+DOCKER_TAG = "0.1"
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def gen_dockerfile(cuda=None):
+    image_name = "package-"
+    if cuda is None:
+        image_name += "cpu"
+    else:
+        image_name += "cu" + cuda.replace(".", "")
+    
+    fn = os.path.join(ROOT, "docker", f"Dockerfile_{image_name}.v{DOCKER_TAG}")
+    with open(fn, 'w') as fout:
+        fout.write(f"# Docker image: tlcpack/{image_name}:{DOCKER_TAG}\n")
+        if cuda is None:
+            fout.write("FROM ubuntu:18.04\n")
+        else:
+            fout.write(f"FROM nvidia/cuda:{cuda}-cudnn7-devel-ubuntu18.04\n")
+        fout.write("""
+# Base scripts
+RUN apt-get update --fix-missing
+
+COPY install/ubuntu_install_core.sh /install/ubuntu_install_core.sh
+RUN bash /install/ubuntu_install_core.sh
+
+COPY install/ubuntu_install_llvm.sh /install/ubuntu_install_llvm.sh
+RUN bash /install/ubuntu_install_llvm.sh
+
+COPY install/ubuntu_install_python.sh /install/ubuntu_install_python.sh
+""")
+        fout.write(f"RUN bash /install/ubuntu_install_python.sh\n")
+        fout.write("""
+COPY install/ubuntu_install_python_package.sh /install/ubuntu_install_python_package.sh
+RUN bash /install/ubuntu_install_python_package.sh
+""")
+        if cuda is not None:
+            fout.write("""
+# Environment variables
+ENV PATH=/usr/local/nvidia/bin:${PATH}
+ENV PATH=/usr/local/cuda/bin:${PATH}
+ENV CPLUS_INCLUDE_PATH=/usr/local/cuda/include:${CPLUS_INCLUDE_PATH}
+ENV C_INCLUDE_PATH=/usr/local/cuda/include:${C_INCLUDE_PATH}
+ENV LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/compact:${LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/compact:${LD_LIBRARY_PATH}
+""")
+    return fn, image_name
+
+
+def build_docker(cuda=None):
+    fn, image_name = gen_dockerfile(cuda)
+    tag = f"tlcpack/{image_name}:{DOCKER_TAG}"
+    cmd = f"sudo docker build -t {tag} -f {fn} ."
+    cwd = os.path.join(ROOT, "docker")
+    print(f"Building docker image {tag}")
+    proc = subprocess.Popen(cmd, shell=True, cwd=cwd)#, stdout=subprocess.PIPE)
+    proc.communicate()
+    if proc.returncode != 0:
+        exit(1)
+
+
+if __name__ == "__main__":
+    for cuda in [None, "10.0", "10.1", "10.2"]:
+        build_docker(cuda)
