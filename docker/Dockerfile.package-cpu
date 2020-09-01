@@ -1,0 +1,26 @@
+# Docker image: tlcpack/package-cpu
+
+FROM quay.io/pypa/manylinux2010_x86_64:2020-08-20-df89e22
+
+# install core
+COPY install/centos_install_core.sh /install/centos_install_core.sh
+RUN bash /install/centos_install_core.sh
+
+# install cmake
+COPY install/centos_install_cmake.sh /install/centos_install_cmake.sh
+RUN bash /install/centos_install_cmake.sh
+
+# build llvm
+COPY install/centos_build_llvm.sh /install/centos_build_llvm.sh
+RUN bash /install/centos_build_llvm.sh 10.0
+
+# upgrade patchelf due to the bug in patchelf 0.10
+# see details at https://stackoverflow.com/questions/61007071/auditwheel-repair-not-working-as-expected
+COPY install/centos_install_patchelf.sh /install/centos_install_patchelf.sh
+RUN bash /install/centos_install_patchelf.sh
+
+# install python packages
+COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
+RUN bash /install/centos_install_python_package.sh 3.6
+RUN bash /install/centos_install_python_package.sh 3.7
+RUN bash /install/centos_install_python_package.sh 3.8
