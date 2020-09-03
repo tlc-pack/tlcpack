@@ -7,7 +7,9 @@ set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCKER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../docker" && pwd)"
 PIP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../pip" && pwd)"
+
 DOCKER_TAG=`cat "${DOCKER_DIR}/version.txt"`
+COMMIT_HASH=`cat "${SCRIPT_DIR}/tvm_commit_hash.txt"`
 
 function usage() {
     echo "Usage: $0 [--cuda CUDA] "
@@ -19,28 +21,25 @@ function usage() {
 function in_array() {
     KEY=$1
     ARRAY=$2
-    #echo $2
     for e in ${ARRAY[*]}; do
         if [[ "$e" == "$1" ]]; then
-            #echo "found"
             return 0
         fi
     done
-    #echo "not found"
     return 1
 }
 
 function build_wheel() {
     CUDA="$1"
+    ARGS="--hash ${COMMIT_HASH}"
     if [[ ${CUDA} == "none" ]]; then
         DOCKER_IMAGE="tlcpack/package-cpu:${DOCKER_TAG}"
         CUDA_ENV=""
-        ARGS=""
         echo "Building wheel for CPU only"
     else
         DOCKER_IMAGE="tlcpack/package-cu${CUDA/./}:${DOCKER_TAG}"
         CUDA_ENV=" --gpus all "
-        ARGS="--cuda ${CUDA}"
+        ARGS="${ARGS} --cuda ${CUDA}"
         echo "Building wheel with CUDA ${CUDA}"
     fi
     

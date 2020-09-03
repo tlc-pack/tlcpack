@@ -3,10 +3,11 @@
 source /multibuild/manylinux_utils.sh
 
 function usage() {
-    echo "Usage: $0 [--cuda CUDA]"
+    echo "Usage: $0 [--cuda CUDA] [--hash HASH]"
     echo
     echo -e "--cuda {none 10.0 10.1 10.2}"
     echo -e "\tSpecify the CUDA version in the TVM (default: none)."
+    echo -e "--hash HASH\tSpecify a git commit hash for TVM."
 }
 
 function in_array() {
@@ -22,12 +23,18 @@ function in_array() {
 
 CUDA_OPTIONS=("none" "10.0" "10.1" "10.2")
 CUDA="none"
+HASH_TAG=""
 
 while [[ $# -gt 0 ]]; do
     arg="$1"
     case $arg in
         --cuda)
             CUDA=$2
+            shift
+            shift
+            ;;
+        --hash)
+            HASH_TAG=$2
             shift
             shift
             ;;
@@ -60,6 +67,9 @@ fi
 # check out the tvm
 cd /workspace
 git clone https://github.com/apache/incubator-tvm tvm --recursive
+if [[ ${HASH_TAG} ]]; then
+    cd /workspace/tvm && git checkout ${HASH_TAG} && git submodule update --recursive
+fi
 
 # config the cmake
 cd /workspace/tvm
@@ -79,6 +89,10 @@ cd build
 cmake ..
 make -j$(nproc)
 
+# patch the package name
+cd /workspace/tvm
+/workspace/scripts/patch_name.sh ${CUDA}
+
 UNICODE_WIDTH=32  # Dummy value, irrelevant for Python 3
 CPYTHON36_PATH="$(cpython_path 3.6 ${UNICODE_WIDTH})"
 CPYTHON37_PATH="$(cpython_path 3.7 ${UNICODE_WIDTH})"
@@ -89,10 +103,6 @@ PYTHON38="${CPYTHON38_PATH}/bin/python"
 PIP36="${CPYTHON36_PATH}/bin/pip"
 PIP37="${CPYTHON37_PATH}/bin/pip"
 PIP38="${CPYTHON38_PATH}/bin/pip"
-
-# patch the package name
-cd /workspace/tvm
-/workspace/scripts/patch_name.sh ${CUDA}
 
 # build the python wheel
 cd /workspace/tvm/python
