@@ -1,4 +1,4 @@
-# Prune the old nightly build and only keep the latest one per version.
+"""Prune the old nightly build and only keep the latest one per version."""
 import sys
 import argparse
 import subprocess
@@ -11,6 +11,28 @@ def py_str(cstr):
 
 
 def extract_key_order(name):
+    """Extract group key and order from name.
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    key : str
+        The group the build should belong to
+
+    order : tuple
+        The order used to sort the builds.
+        The higher the latest
+
+    Note
+    ----
+    We make use of the naming convention of the build string.
+    GIT_BUILD_STR starts by the number of commits from the latest tag.
+    So the larger the number is, the more commits are applied.
+    We will favor the build with more commits.
+    """
     key, name = name.split("/", 1)
     order = name[: -len(".tar.bz2")]
     py_loc = order.find("_py")
@@ -79,7 +101,7 @@ def run_prune(group_map, args):
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description="Cleanup conda")
+    parser = argparse.ArgumentParser(description="Prunes older builds sorted by build str.")
     parser.add_argument("--version", type=str)
     parser.add_argument("--keep-top", type=int, default=1)
     parser.add_argument("--dry-run", action="store_true")
