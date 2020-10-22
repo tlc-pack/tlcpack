@@ -63,6 +63,8 @@ outputs:
         - python
         - decorator
         - psutil
+        - scipy
+        - pytest
         - {{ pin_compatible('numpy') }}
         - {{ pin_subpackage(pkg_name + '-libs', exact=True) }}
 
