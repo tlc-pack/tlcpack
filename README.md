@@ -1,5 +1,9 @@
 # tlcpack
 
+[![Conda-CPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Conda-CPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AConda-CPU-Nightly)
+[![Conda-GPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Conda-GPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AConda-GPU-Nightly)
+[![Conda-Prune-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Conda-Prune-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AConda-Prune-Nightly)
+
 Tensor learning compiler binary distribution package.
 
 ## Build Process
