@@ -1,0 +1,61 @@
+name: Conda-GPU-Nightly
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 7 * * *' # 7 AM UTC
+
+jobs:
+  Build:
+    strategy:
+      matrix:
+        cuda: ['cuda100']
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v1
+      env:
+        CACHE_NUMBER: 0
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('conda/build-environment.yaml') }}
+    - uses: conda-incubator/setup-miniconda@v1
+      with:
+        activate-environment: tlcpack-build
+        channel-priority: strict
+        environment-file: conda/build-environment.yaml
+        auto-activate-base: false
+        use-only-tar-bz2: true
+    - name: Conda info
+      run: |
+        conda info
+        conda list
+    - name: TVM checkout
+      run: |
+        git clone https://github.com/tqchen/tvm -b conda --recursive
+        cd tvm
+        git remote add upstream https://github.com/apache/incubator-tvm
+        git fetch upstream
+        cd ..
+    - name: Sync Version
+      run: |
+        python conda/sync_version.py
+    - name: Build@Cuda100
+      uses: ./.github/actions/docker-conda-cuda100
+      if: matrix.cuda == 'cuda100'
+      with:
+        script: conda/build_cuda.sh conda/nightly_build_config.yaml
+    - name: Conda-Deploy
+      if: github.ref == 'refs/heads/main'
+      shell: bash -l {0}
+      env:
+        ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+      run: >-
+        anaconda upload --force --label main conda/pkg/linux-64/*.tar.bz2

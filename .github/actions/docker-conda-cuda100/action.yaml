@@ -1,0 +1,10 @@
+name: 'run-conda-cuda100'
+description: 'Run a bash script in docker'
+
+inputs:
+  script:
+    description: 'input script'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

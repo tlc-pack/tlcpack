@@ -42,7 +42,7 @@ function build_wheel() {
         ARGS="${ARGS} --cuda ${CUDA}"
         echo "Building wheel with CUDA ${CUDA}"
     fi
-    
+
     echo "Running docker image ${DOCKER_IMAGE}"
     ${DOCKER_DIR}/bash.sh ${DOCKER_IMAGE} scripts/build_tvm.sh ${ARGS}
 }

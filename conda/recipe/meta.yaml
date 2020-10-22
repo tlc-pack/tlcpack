@@ -1,0 +1,72 @@
+{% set pkg_name = pkg_name | default('tlcpack') %}
+{% set version = '0.8.dev0' %}
+
+{% set cuda_tag = cuda_version | replace('.', '') %} # [cuda]
+{% set pkg_name = pkg_name + '-cu' + cuda_tag %} # [cuda]
+{% set build_tag = environ.get('GIT_BUILD_STR', 'unknown') %}
+{% set build_tag = build_tag + '_h' + PKG_HASH + '_' + PKG_BUILDNUM %}
+
+package:
+  name: {{ pkg_name }}-package
+  version: {{ version }}
+
+source:
+  path: '../../tvm'
+
+build:
+  number: 0
+  include_recipe: False
+  missing_dso_whitelist:
+    - "*libcuda.*"  # [linux]
+
+requirements:
+  build:
+    # The anaconda compilers for OS X are old an annoying
+    # so we rely on the platform ones for now
+    - {{ compiler('cxx') }} # [not osx]
+    - cmake
+    - make # [not win]
+  host:
+    - zlib
+    - llvmdev ==10.0.0
+
+outputs:
+  - name: {{ pkg_name }}-libs
+    script: install_libs.bat # [win]
+    script: install_libs.sh  # [not win]
+    string: {{ build_tag }}
+    requirements:
+      build:
+        - {{ compiler('cxx') }}
+        - cmake
+        - git
+        - make # [not win]
+      host:
+        - zlib
+        - llvmdev ==10.0.0
+        - {{ pin_compatible('cudatoolkit', lower_bound=cuda_version, max_pin='x.x') }}  # [cuda]
+        - {{ pin_compatible('cudnn', lower_bound='7.6.0', max_pin='x') }}  # [cuda]
+      run:
+        - llvmdev ==10.0.0
+        - {{ pin_compatible('cudatoolkit', lower_bound=cuda_version, max_pin='x.x') }}  # [cuda]
+        - {{ pin_compatible('cudnn', lower_bound='7.6.0', max_pin='x') }}  # [cuda]
+
+  - name: {{ pkg_name }}
+    script: install_python_pkg.sh  # [not win]
+    script: install_python_pkg.bat # [win]
+    string: {{ build_tag }}_py{{ PY_VER | replace('.', '')}}
+    requirements:
+      host:
+        - python
+        - setuptools
+      run:
+        - python
+        - decorator
+        - psutil
+        - {{ pin_compatible('numpy') }}
+        - {{ pin_subpackage(pkg_name + '-libs', exact=True) }}
+
+about:
+  home: https://tlcpack.ai
+  license: Apache2
+  summary: Tensor learning compiler binary package.
