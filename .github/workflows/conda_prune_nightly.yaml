@@ -1,0 +1,45 @@
+name: Conda-Prune-Nightly
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 8 * * *' # 8 AM UTC
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v1
+      env:
+        CACHE_NUMBER: 0
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('conda/build-environment.yaml') }}
+    - uses: conda-incubator/setup-miniconda@v1
+      with:
+        activate-environment: tlcpack-build
+        channel-priority: strict
+        environment-file: conda/build-environment.yaml
+        auto-activate-base: false
+        use-only-tar-bz2: true
+    - name: Conda info
+      run: |
+        conda info
+        conda list
+    - name: Conda-Prune
+      if: github.ref == 'refs/heads/main'
+      shell: bash -l {0}
+      env:
+        ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+      run: >-
+        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly &&
+        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly-libs &&
+        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly-cu100 &&
+        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly-cu100-libs
