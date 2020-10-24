@@ -59,6 +59,7 @@ outputs:
       host:
         - python
         - setuptools
+        - cython
       run:
         - python
         - decorator

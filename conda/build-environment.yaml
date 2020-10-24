@@ -9,10 +9,11 @@ dependencies:
   - conda-build
   - anaconda-client
   - git
-  - llvmdev
+  - llvmdev ==10.0.0
   - numpy
   - pytest
   - cmake
   - bzip2
   - make
   - scipy
+  - cython
