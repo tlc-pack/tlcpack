@@ -39,11 +39,7 @@ jobs:
         conda list
     - name: TVM checkout
       run: |
-        git clone https://github.com/tqchen/tvm -b conda --recursive
-        cd tvm
-        git remote add upstream https://github.com/apache/incubator-tvm
-        git fetch upstream
-        cd ..
+        git clone https://github.com/apache/incubator-tvm tvm --recursive
     - name: Sync Version
       run: |
         python conda/sync_version.py
