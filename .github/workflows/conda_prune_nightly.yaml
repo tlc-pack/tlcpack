@@ -39,7 +39,7 @@ jobs:
       env:
         ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
       run: >-
-        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly &&
-        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly-libs &&
-        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly-cu100 &&
-        python conda/anaconda_prune.py --version 0.8.dev0 tlcpack/tlcpack-nightly-cu100-libs
+        python conda/anaconda_prune.py tlcpack/tlcpack-nightly &&
+        python conda/anaconda_prune.py tlcpack/tlcpack-nightly-libs &&
+        python conda/anaconda_prune.py tlcpack/tlcpack-nightly-cu100 &&
+        python conda/anaconda_prune.py tlcpack/tlcpack-nightly-cu100-libs

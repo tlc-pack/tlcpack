@@ -10,16 +10,16 @@ def py_str(cstr):
     return cstr.decode("utf-8")
 
 
-def extract_key_order(name):
+def extract_key_order(path):
     """Extract group key and order from name.
 
     Parameters
     ----------
-    name : str
+    path : str
 
     Returns
     -------
-    key : str
+    group_key : tuple
         The group the build should belong to
 
     order : tuple
@@ -33,22 +33,37 @@ def extract_key_order(name):
     So the larger the number is, the more commits are applied.
     We will favor the build with more commits.
     """
-    key, name = name.split("/", 1)
-    order = name[: -len(".tar.bz2")]
-    py_loc = order.find("_py")
-    key = (key, order[py_loc:])
-    order = order[:py_loc]
-    order = order.rsplit("-", 1)[-1]
-    order = order.split("_")
+    platform, name = path.split("/", 1)
+    name = name[: -len(".tar.bz2")]
+    py_loc = name.find("_py")
+    group_key = [platform]
+
+    if py_loc != -1:
+        group_key.append(name[py_loc + 1 :])
+        name = name[:py_loc]
+
+    _, ver, build_str = name.rsplit("-", 2)
+
     try:
-        order[0] = int(order[0])
+        order = [int(build_str.split("_")[0])]
     except:
-        order.insert(0, 0)
-    order = tuple(order)
-    return key, order
+        order = [0]
+
+    dev_pos = ver.find(".dev")
+    if dev_pos != -1:
+        # all nightly share the same group
+        group_key.append("nigtly")
+        # dev number as the order.
+        pub_ver = [int(x) for x in ver[:dev_pos].split(".")]
+        order = pub_ver + [int(ver[dev_pos + 4 :])] + order
+    else:
+        # stable version has its own group
+        group_key.append(ver)
+
+    return tuple(group_key), tuple(order)
 
 
-def list_packages(name, version):
+def list_package_with_version(name, version):
     cmd = ["anaconda", "show", f"{name}/{version}"]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (out, _) = proc.communicate()
@@ -65,8 +80,40 @@ def list_packages(name, version):
     return files
 
 
-def remove_package(args, path):
-    cmd = ["anaconda", "remove", "--force", f"{args.name}/{args.version}/{path}"]
+def list_package_versions(name):
+    cmd = ["anaconda", "show", name]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    (out, _) = proc.communicate()
+    if proc.returncode != 0:
+        msg = "anaconda show error:"
+        msg += py_str(out)
+        logging.warning(msg)
+        return []
+
+    start_version_sec = False
+    versions = []
+    for line in py_str(out).split("\n"):
+        line = line.strip()
+        if line.startswith("Versions:"):
+            start_version_sec = True
+            continue
+        if start_version_sec:
+            if line.find("+") != -1:
+                version = line.split("+")[-1].strip()
+                versions.append(version)
+    return versions
+
+
+def list_packages(name):
+    files = []
+    for version in list_package_versions(name):
+        for path in list_package_with_version(name, version):
+            files.append((version, path))
+    return files
+
+
+def remove_package(args, version, path):
+    cmd = ["anaconda", "remove", "--force", f"{args.name}/{version}/{path}"]
     logging.debug(cmd)
     fprune = print("remove %s" % path)
     if args.dry_run:
@@ -81,28 +128,31 @@ def remove_package(args, path):
 
 def group_packages(files):
     group_map = {}
-    for name in files:
-        key, order = extract_key_order(name)
+    for version, path in files:
+        key, order = extract_key_order(path)
         if key not in group_map:
             group_map[key] = []
-        group_map[key].append((order, name))
+        group_map[key].append((order, version, path))
     return group_map
 
 
 def run_prune(group_map, args):
     for key, files in group_map.items():
+        print(f"Group {key}:")
         for idx, item in enumerate(reversed(sorted(files))):
+            order, version, path = item
             if idx < args.keep_top:
-                print("keep  %s" % item[1])
+                print("keep  %s" % path)
             else:
-                remove_package(args, item[1])
+                remove_package(args, version, path)
         print()
 
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser(description="Prunes older builds sorted by build str.")
-    parser.add_argument("--version", type=str)
+    parser = argparse.ArgumentParser(
+        description="Prunes older builds sorted by build str."
+    )
     parser.add_argument("--keep-top", type=int, default=1)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("name", type=str)
@@ -110,7 +160,7 @@ def main():
     if "ANACONDA_API_TOKEN" not in os.environ:
         raise RuntimeError("need ANACONDA_API_TOKEN")
     args = parser.parse_args()
-    files = list_packages(args.name, args.version)
+    files = list_packages(args.name)
     groups = group_packages(files)
     run_prune(groups, args)
 
