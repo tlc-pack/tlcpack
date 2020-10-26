@@ -60,6 +60,7 @@ outputs:
         - python
         - setuptools
         - cython
+        - {{ pin_subpackage(pkg_name + '-libs', exact=True) }}
       run:
         - python
         - decorator
