@@ -10,7 +10,7 @@ def py_str(cstr):
     return cstr.decode("utf-8")
 
 
-def extract_key_order(path):
+def extract_group_key_order(path):
     """Extract group key and order from name.
 
     Parameters
@@ -129,7 +129,7 @@ def remove_package(args, version, path):
 def group_packages(files):
     group_map = {}
     for version, path in files:
-        key, order = extract_key_order(path)
+        key, order = extract_group_key_order(path)
         if key not in group_map:
             group_map[key] = []
         group_map[key].append((order, version, path))

@@ -17,3 +17,4 @@ dependencies:
   - make
   - scipy
   - cython
+  - pip

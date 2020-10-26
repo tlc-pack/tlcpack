@@ -102,6 +102,7 @@ celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
+tlc-pack.github.io
 
 # Environments
 .env

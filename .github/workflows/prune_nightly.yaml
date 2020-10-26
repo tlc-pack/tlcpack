@@ -1,4 +1,4 @@
-name: Conda-Prune-Nightly
+name: Prune-Nightly
 
 on:
   push:
@@ -33,6 +33,24 @@ jobs:
       run: |
         conda info
         conda list
+    - name: Wheel-Site-Checkout
+      if: github.ref == 'refs/heads/main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
+      run: |
+        git clone https://$GITHUB_TOKEN@github.com/tlc-pack/tlc-pack.github.io
+        cd tlc-pack.github.io
+        git config user.name tlcpack-archiver
+        git config user.email 73483364+tlcpack-archiver@users.noreply.github.com
+        cd ..
+    - name: Wheel-Prune-Sync
+      if: github.ref == 'refs/heads/main'
+      shell: bash -l {0}
+      env:
+        GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
+      run: >-
+        python -m pip install github3.py &&
+        python wheel/wheel_prune_and_sync.py
     - name: Conda-Prune
       if: github.ref == 'refs/heads/main'
       shell: bash -l {0}
