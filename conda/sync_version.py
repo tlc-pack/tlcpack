@@ -10,10 +10,15 @@ def main():
         libversion,
         libversion,
     )
+    pub_ver = libversion["__version__"]
+
+    if "git_describe_version" in libversion:
+        pub_ver, _ = lib["git_describe_version"]()
+
     libversion["update"](
         os.path.join("conda", "recipe", "meta.yaml"),
         "(?<=version = ')[.0-9a-z]+",
-        libversion["__version__"],
+        pub_ver,
     )
 
 
