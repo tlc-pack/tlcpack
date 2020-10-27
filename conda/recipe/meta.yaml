@@ -1,5 +1,5 @@
 {% set pkg_name = pkg_name | default('tlcpack') %}
-{% set version = '0.8.dev0' %}
+{% set version = '0.7.0' %}
 
 {% set cuda_tag = cuda_version | replace('.', '') %} # [cuda]
 {% set pkg_name = pkg_name + '-cu' + cuda_tag %} # [cuda]

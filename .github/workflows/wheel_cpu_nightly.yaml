@@ -16,6 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [macOS-latest, windows-2016]
+        pkg: ['tlcpack', 'tlcpack-nightly']
 
     runs-on: ${{ matrix.os }}
 
@@ -42,6 +43,8 @@ jobs:
     - name: TVM checkout
       run: |
         git clone https://github.com/apache/incubator-tvm tvm --recursive
+    - name: Sync Package
+      run: python common/sync_package.py ${{ matrix.pkg }}
     - name: Build@MacOS
       if: startsWith(matrix.os, 'macOS')
       shell: bash -l {0}
@@ -60,7 +63,6 @@ jobs:
       env:
         MACOSX_DEPLOYMENT_TARGET: 10.14
       run: |
-        python wheel/sync_package_name.py tlcpack-nightly
         python -m pip install setuptools Cython wheel
         cd tvm/python
         python setup.py bdist_wheel

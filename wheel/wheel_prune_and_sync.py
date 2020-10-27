@@ -110,7 +110,7 @@ def update_wheel_page(keep_list, site_repo, dry_run=False):
         )
         (out, _) = proc.communicate()
         if proc.returncode != 0:
-            msg = "git update error:"
+            msg = "git error: %s" % cmd
             msg += py_str(out)
             raise RuntimeError(msg)
 

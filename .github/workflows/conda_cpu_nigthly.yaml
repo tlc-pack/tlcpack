@@ -16,6 +16,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2016, macOS-latest, ubuntu-latest]
+        pkg: ['tlcpack', 'tlcpack-nightly']
 
     runs-on: ${{ matrix.os }}
 
@@ -41,24 +42,23 @@ jobs:
     - name: TVM checkout
       run: |
         git clone https://github.com/apache/incubator-tvm tvm --recursive
-    - name: Sync Version
-      run: |
-        python conda/sync_version.py
+    - name: Sync Package
+      run: python common/sync_package.py ${{ matrix.pkg }}
     - name: Conda-Build@Win
       if: startsWith(matrix.os, 'windows')
       shell: cmd /C call {0}
       run: >-
-        conda build --output-folder=conda/pkg -m conda/nightly_build_config.yaml conda/recipe
+        conda build --output-folder=conda/pkg -m conda/build_config.yaml conda/recipe
     - name: Conda-Build@MacOS
       if: startsWith(matrix.os, 'macOS')
       shell: bash -l {0}
       run: >-
-        conda build --output-folder=conda/pkg -m conda/nightly_build_config.yaml conda/recipe
+        conda build --output-folder=conda/pkg -m conda/build_config.yaml conda/recipe
     - name: Conda-Build@Linux
       if: startsWith(matrix.os, 'ubuntu')
       shell: bash -l {0}
       run: >-
-        conda build --output-folder=conda/pkg -m conda/nightly_build_config.yaml conda/recipe
+        conda build --output-folder=conda/pkg -m conda/build_config.yaml conda/recipe
     - name: Conda-Deploy@Win
       if: startsWith(matrix.os, 'windows') && github.ref == 'refs/heads/main'
       shell: cmd /C call {0}
