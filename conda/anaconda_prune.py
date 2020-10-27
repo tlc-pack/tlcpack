@@ -52,7 +52,7 @@ def extract_group_key_order(path):
     dev_pos = ver.find(".dev")
     if dev_pos != -1:
         # all nightly share the same group
-        group_key.append("nigtly")
+        group_key.append("nightly")
         # dev number as the order.
         pub_ver = [int(x) for x in ver[:dev_pos].split(".")]
         order = pub_ver + [int(ver[dev_pos + 4 :])] + order
