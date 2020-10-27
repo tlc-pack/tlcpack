@@ -2,6 +2,7 @@
 
 [![Conda-CPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Conda-CPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AConda-CPU-Nightly)
 [![Conda-GPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Conda-GPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AConda-GPU-Nightly)
+[![Wheel-CPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Wheel-CPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AWheel-CPU-Nightly)
 [![Prune-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Prune-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3APrune-Nightly)
 
 Tensor learning compiler binary distribution package.
