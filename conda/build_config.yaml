@@ -3,5 +3,4 @@ python:
   - 3.7
   - 3.8
 
-pkg_name:
-  - tlcpack-nightly
+pkg_name: 'tlcpack'
