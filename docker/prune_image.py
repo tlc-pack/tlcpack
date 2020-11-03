@@ -5,6 +5,8 @@ import logging
 import argparse
 import subprocess
 
+STABLE_TEMP_VER = 2048
+
 
 def py_str(cstr):
     return cstr.decode("utf-8")
@@ -39,7 +41,7 @@ def extract_order(tag):
     if plus_pos != -1:
         ver = ver[:plus_pos]
 
-    temp_ver = 2048
+    temp_ver = STABLE_TEMP_VER
     sub_pos = ver.find("-t")
     if sub_pos != -1:
         ver = ver[:sub_pos]
@@ -80,8 +82,17 @@ def run_prune(args, images):
     remove_list = []
     for name, tags in images.items():
         print("Group %s:" % name)
+        stable_counter = 0
         for idx, item in enumerate(reversed(sorted(tags, key=lambda x: x[1]))):
-            tag, _ = item
+            tag, order = item
+            temp_ver = order[-1]
+            # always keep one stable version
+            if args.keep_top and temp_ver == STABLE_TEMP_VER:
+                stable_counter += 1
+                if stable_counter == 1:
+                    print("keep  %s:%s" % (name, tag))
+                    continue
+
             if idx < args.keep_top:
                 print("keep  %s:%s" % (name, tag))
             else:
@@ -95,6 +106,7 @@ def delete_images(remove_list, dry_run):
     rm_list = ["%s:%s" % (name, tag) for name, tag in remove_list]
     if not dry_run:
         out = run_cmd(["docker", "image", "rm"] + rm_list)
+        print(out)
 
     if remove_list:
         print("Finish deleting %d tags" % len(remove_list))
