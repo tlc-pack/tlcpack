@@ -49,15 +49,13 @@ def extract_order(tag):
             temp_ver = 0
 
     dev_pos = ver.find(".dev")
-    pub_ver = [int(x) for x in ver[:dev_pos].split(".")]
-
+    dev_ver = 0
     if dev_pos != -1:
-        # dev number as the order.
-        order = pub_ver + [int(ver[dev_pos + 4 :])] + [temp_ver]
-    else:
-        order = pub_ver + [temp_ver]
+        dev_ver = int(ver[dev_pos + 4 :])
+        ver = ver[:dev_pos]
 
-    return tuple(order)
+    pub_ver = [int(x) for x in ver.split(".")]
+    return tuple(pub_ver + [dev_ver, temp_ver])
 
 
 def list_images(prefix):
@@ -85,9 +83,9 @@ def run_prune(args, images):
         for idx, item in enumerate(reversed(sorted(tags, key=lambda x: x[1]))):
             tag, _ = item
             if idx < args.keep_top:
-                print("keep  %s/%s" % (name, tag))
+                print("keep  %s:%s" % (name, tag))
             else:
-                print("remove  %s/%s" % (name, tag))
+                print("remove  %s:%s" % (name, tag))
                 remove_list.append((name, tag))
         print()
     return remove_list
