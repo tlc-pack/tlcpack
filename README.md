@@ -7,6 +7,13 @@
 
 Tensor learning compiler binary distribution package.
 
+## Github Actions
+
+We use github action to build wheel and conda packages nightly.
+
+Checkout [.github/workflows](.github/workflows)
+
+
 ## Build Process
 
 1. Build docker images

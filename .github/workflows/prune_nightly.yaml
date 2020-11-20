@@ -1,3 +1,7 @@
+# This workflow prunes the conda and pip nightly repo
+# to remove old nightly builds (to keep the storage cost minimal).
+# We also synchronize the wheel release page in the main website
+# to list all the latest wheel uploded.
 name: Prune-Nightly
 
 on:
