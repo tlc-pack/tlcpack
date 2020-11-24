@@ -66,7 +66,7 @@ fi
 
 # check out the tvm
 cd /workspace
-git clone https://github.com/apache/incubator-tvm tvm --recursive
+git clone https://github.com/apache/tvm tvm --recursive
 if [[ ${HASH_TAG} ]]; then
     cd /workspace/tvm && git checkout ${HASH_TAG} && git submodule update --recursive
 fi
