@@ -40,7 +40,7 @@ jobs:
         conda list
     - name: TVM checkout
       run: |
-        git clone https://github.com/apache/incubator-tvm tvm --recursive
+        git clone https://github.com/apache/tvm tvm --recursive
     - name: Sync Package
       run: python common/sync_package.py ${{ matrix.pkg }}
     - name: Build@Cuda100
