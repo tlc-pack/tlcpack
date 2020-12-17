@@ -5,8 +5,8 @@ set -u
 set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCKER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../docker" && pwd)"
-PIP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../pip" && pwd)"
+DOCKER_DIR="$(dirname "${SCRIPT_DIR}")/docker"
+PIP_DIR="$(dirname "${SCRIPT_DIR}")/pip"
 
 DOCKER_TAG=`cat "${DOCKER_DIR}/version.txt"`
 COMMIT_HASH=`cat "${SCRIPT_DIR}/tvm_commit_hash.txt"`
