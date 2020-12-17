@@ -12,10 +12,15 @@ DOCKER_TAG=`cat "${DOCKER_DIR}/version.txt"`
 COMMIT_HASH=`cat "${SCRIPT_DIR}/tvm_commit_hash.txt"`
 
 function usage() {
-    echo "Usage: $0 [--cuda CUDA] "
+    echo "Usage: $0 [--cuda CUDA] [--hash GIT_HASH]"
     echo
     echo -e "--cuda {none 10.0 10.1 10.2}"
     echo -e "\tSpecify the CUDA version in building the wheels. If not specified, build all version."
+    echo
+    echo -e "--hash GIT_HASH"
+    echo -e "\tBuild packages using a specific TVM git hash."
+    echo -e "\tThis option overrides the value in scripts/tvm_commit_hash.txt"
+    echo
 }
 
 function in_array() {
@@ -57,6 +62,10 @@ while [[ $# -gt 0 ]]; do
             CUDA=("$2")
             shift
             shift
+            ;;
+        --hash)
+            COMMIT_HASH=("$2")
+            shift 2
             ;;
         -h|--help)
             usage
