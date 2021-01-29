@@ -42,3 +42,5 @@ Or, to build wheels for CPU only, run
 ```bash
 ./scripts/build_pip_wheel.sh --cuda none
 ```
+
+Check `./scripts/build_pip_wheel.sh --help` for other options.

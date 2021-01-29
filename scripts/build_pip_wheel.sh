@@ -10,9 +10,11 @@ PIP_DIR="$(dirname "${SCRIPT_DIR}")/pip"
 
 DOCKER_TAG=`cat "${DOCKER_DIR}/version.txt"`
 COMMIT_HASH=`cat "${SCRIPT_DIR}/tvm_commit_hash.txt"`
+DEFAULT_TVM_URL="https://github.com/apache/tvm"
+TVM_URL="${DEFAULT_TVM_URL}"
 
 function usage() {
-    echo "Usage: $0 [--cuda CUDA] [--hash GIT_HASH]"
+    echo "Usage: $0 [--cuda CUDA] [--tvm-url URL] [--hash GIT_HASH]"
     echo
     echo -e "--cuda {none 10.0 10.1 10.2}"
     echo -e "\tSpecify the CUDA version in building the wheels. If not specified, build all version."
@@ -20,6 +22,10 @@ function usage() {
     echo -e "--hash GIT_HASH"
     echo -e "\tBuild packages using a specific TVM git hash."
     echo -e "\tThis option overrides the value in scripts/tvm_commit_hash.txt"
+    echo
+    echo -e "--tvm-url URL"
+    echo -e "\tBuild packages using a custom TVM repository URL."
+    echo -e "\tDefaults to \"${DEFAULT_TVM_URL}\""
     echo
 }
 
@@ -36,7 +42,7 @@ function in_array() {
 
 function build_wheel() {
     CUDA="$1"
-    ARGS="--hash ${COMMIT_HASH}"
+    ARGS="--tvm-url \"${TVM_URL}\" --hash ${COMMIT_HASH}"
     if [[ ${CUDA} == "none" ]]; then
         DOCKER_IMAGE="tlcpack/package-cpu:${DOCKER_TAG}"
         CUDA_ENV=""
@@ -70,6 +76,10 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             usage
             exit -1
+            ;;
+        --tvm-url)
+            TVM_URL=("$2")
+            shift 2
             ;;
         *) # unknown option
             echo "Unknown argument: $arg"

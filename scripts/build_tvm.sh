@@ -3,11 +3,14 @@
 source /multibuild/manylinux_utils.sh
 
 function usage() {
-    echo "Usage: $0 [--cuda CUDA] [--hash HASH]"
+    echo "Usage: $0 [--cuda CUDA] [--tvm-url URL] [--hash HASH]"
     echo
     echo -e "--cuda {none 10.0 10.1 10.2}"
     echo -e "\tSpecify the CUDA version in the TVM (default: none)."
-    echo -e "--hash HASH\tSpecify a git commit hash for TVM."
+    echo -e "--hash HASH"
+    echo -e "\tSpecify a git commit hash for TVM."
+    echo -e "--tvm-url URL"
+    echo -e "\tSpecify a git repository URL for TVM (default: ${DEFAULT_TVM_URL})."
 }
 
 function in_array() {
@@ -24,6 +27,8 @@ function in_array() {
 CUDA_OPTIONS=("none" "10.0" "10.1" "10.2")
 CUDA="none"
 HASH_TAG=""
+DEFAULT_TVM_URL="https://github.com/apache/tvm"
+TVM_URL="${DEFAULT_TVM_URL}"
 
 while [[ $# -gt 0 ]]; do
     arg="$1"
@@ -41,6 +46,10 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             usage
             exit -1
+            ;;
+        --tvm-url)
+            TVM_URL=("$2")
+            shift 2
             ;;
         *) # unknown option
             echo "Unknown argument: $arg"
@@ -66,7 +75,9 @@ fi
 
 # check out the tvm
 cd /workspace
-git clone https://github.com/apache/tvm tvm --recursive
+echo "Cloning TVM from ${TVM_URL}"
+git clone "${TVM_URL}" tvm --recursive
+
 if [[ ${HASH_TAG} ]]; then
     cd /workspace/tvm && git checkout ${HASH_TAG} && git submodule update --recursive
 fi
