@@ -9,7 +9,7 @@ dependencies:
   - conda-build
   - anaconda-client
   - git
-  - llvmdev ==10.0.1
+  - llvmdev ==10.0.0
   - numpy
   - pytest
   - cmake
