@@ -19,6 +19,10 @@ RUN bash /install/centos_build_llvm.sh 10.0
 COPY install/centos_install_patchelf.sh /install/centos_install_patchelf.sh
 RUN bash /install/centos_install_patchelf.sh
 
+# Install Arm Ethos-N NPU driver stack
+COPY install/centos_install_arm_ethosn_driver_stack.sh /install/centos_install_arm_ethosn_driver_stack.sh
+RUN bash /install/centos_install_arm_ethosn_driver_stack.sh
+
 # install python packages
 COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
 RUN bash /install/centos_install_python_package.sh 3.6
