@@ -88,6 +88,7 @@ echo set\(USE_LLVM \"llvm-config --ignore-libllvm\"\) >> config.cmake
 echo set\(USE_RPC ON\) >> config.cmake
 echo set\(USE_SORT ON\) >> config.cmake
 echo set\(USE_GRAPH_RUNTIME ON\) >> config.cmake
+echo set\(USE_ETHOSN /opt/arm/ethosn-driver\) >> config.cmake
 if [[ ${CUDA} != "none" ]]; then
     echo set\(USE_CUDA ON\) >> config.cmake
     echo set\(USE_CUBLAS ON\) >> config.cmake
