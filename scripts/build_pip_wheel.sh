@@ -42,7 +42,7 @@ function in_array() {
 
 function build_wheel() {
     CUDA="$1"
-    ARGS="--tvm-url \"${TVM_URL}\" --hash ${COMMIT_HASH}"
+    ARGS="--tvm-url ${TVM_URL} --hash ${COMMIT_HASH}"
     if [[ ${CUDA} == "none" ]]; then
         DOCKER_IMAGE="tlcpack/package-cpu:${DOCKER_TAG}"
         CUDA_ENV=""
