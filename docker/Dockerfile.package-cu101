@@ -23,6 +23,10 @@ RUN bash /install/centos_install_patchelf.sh
 COPY install/centos_install_arm_ethosn_driver_stack.sh /install/centos_install_arm_ethosn_driver_stack.sh
 RUN bash /install/centos_install_arm_ethosn_driver_stack.sh
 
+# Install Compute Library for Arm(r) Architecture (ACL)
+COPY install/centos_install_arm_compute_library.sh /install/centos_install_arm_compute_library.sh
+RUN bash /install/centos_install_arm_compute_library.sh
+
 # install python packages
 COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
 RUN bash /install/centos_install_python_package.sh 3.6
