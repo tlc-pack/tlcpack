@@ -1,0 +1,27 @@
+# GH Actions
+name: Docker-CPU-Nightly
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 6 * * *' # 6 AM UTC
+
+jobs:
+  build-docker-cpu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted.
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      -
+        name: Check out repository
+        uses: actions/checkout@v2
+      -
+        name: Build the image
+        run: ./scripts/build_pip_wheel.sh --hash 09df4edb275c96ff23f4fa021fed3050cc3d4b57 --cuda none
