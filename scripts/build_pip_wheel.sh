@@ -12,6 +12,7 @@ DOCKER_TAG=`cat "${DOCKER_DIR}/version.txt"`
 COMMIT_HASH=`cat "${SCRIPT_DIR}/tvm_commit_hash.txt"`
 DEFAULT_TVM_URL="https://github.com/apache/tvm"
 TVM_URL="${DEFAULT_TVM_URL}"
+DOCKER_REPOSITORY=`cat "${DOCKER_DIR}/repository.txt"`
 
 function usage() {
     echo "Usage: $0 [--cuda CUDA] [--tvm-url URL] [--hash GIT_HASH]"
@@ -44,11 +45,11 @@ function build_wheel() {
     CUDA="$1"
     ARGS="--tvm-url ${TVM_URL} --hash ${COMMIT_HASH}"
     if [[ ${CUDA} == "none" ]]; then
-        DOCKER_IMAGE="tlcpack/package-cpu:${DOCKER_TAG}"
+        DOCKER_IMAGE="${DOCKER_REPOSITORY}/package-cpu:${DOCKER_TAG}"
         CUDA_ENV=""
         echo "Building wheel for CPU only"
     else
-        DOCKER_IMAGE="tlcpack/package-cu${CUDA/./}:${DOCKER_TAG}"
+        DOCKER_IMAGE="${DOCKER_REPOSITORY}/package-cu${CUDA/./}:${DOCKER_TAG}"
         CUDA_ENV=" --gpus all "
         ARGS="${ARGS} --cuda ${CUDA}"
         echo "Building wheel with CUDA ${CUDA}"
