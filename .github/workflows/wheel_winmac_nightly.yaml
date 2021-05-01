@@ -1,5 +1,5 @@
 # GH actions.
-name: Wheel-CPU-Nightly
+name: Wheel-WinMac-Nightly
 
 on:
   push:

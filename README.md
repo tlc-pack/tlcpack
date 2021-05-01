@@ -24,23 +24,35 @@ Checkout [.github/workflows](.github/workflows)
 CONTAINER_NAME: Type of the docker container used to build wheels, e.g., (cpu|cu100|cu101|cu102)
 ```
 
-2. Build tlcpack PIP wheels.
+2. Checkout tvm and sync version
 
-To build wheels for all Python versions (3.6, 3.7, 3.8) with CPU and all CUDA versions (10.0, 10.1, 10.2), run
+```
+git clone https://github.com/apache/tvm --recursive
+# synchronize the package version
+python common/sync_package.py [tlcpack|tlcpack-nightly]
+```
 
-```bash
-./scripts/build_pip_wheel.sh
+The nightly will point to the latest main, tlcpack
+will point to a stable build hashtag defined in common/sync_package.py
+
+
+3. Build tlcpack manylinux wheels.
+
+```
+./docker/bash.sh [docker-image] ./wheel/build_manylinux_wheel.sh --cuda none
 ```
 
 To build wheels for a specific CUDA version, for example, CUDA 10.1, run
 
 ```bash
-./scripts/build_pip_wheel.sh --cuda 10.1
+./docker/bash.sh [docker-image] ./wheel/build_manylinux_wheel.sh --cuda 10.1
 ```
 
-Or, to build wheels for CPU only, run
-```bash
-./scripts/build_pip_wheel.sh --cuda none
-```
+The docker image is built in step 1 and needs to match the cuda version.
 
-Check `./scripts/build_pip_wheel.sh --help` for other options.
+4. Get the wheels
+
+The wheels are now available in
+```
+./tvm/python/repaird_wheels
+```

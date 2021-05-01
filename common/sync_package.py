@@ -17,7 +17,7 @@ def py_str(cstr):
     return cstr.decode("utf-8")
 
 
-def checkout_stable(src):
+def checkout_source(src, tag):
     def run_cmd(cmd):
         proc = subprocess.Popen(
             cmd, cwd=src, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -28,9 +28,9 @@ def checkout_stable(src):
             msg += py_str(out)
             raise RuntimeError(msg)
 
-    run_cmd(["git", "checkout", __stable_build__])
+    run_cmd(["git", "checkout", "-f", tag])
     run_cmd(["git", "submodule", "update"])
-    print("git checkout %s" % __stable_build__)
+    print("git checkout %s" % tag)
 
 
 def update(file_name, rewrites, dry_run=False):
@@ -98,7 +98,10 @@ def main():
     args = parser.parse_args()
 
     if 'nightly' not in args.name:
-        checkout_stable(args.src)
+        checkout_source(args.src, __stable_build__)
+    else:
+        checkout_source(args.src, "origin/main")
+
     update_setup(args)
     update_conda(args)
 
