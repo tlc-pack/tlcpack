@@ -71,4 +71,3 @@ ${DOCKER_BINARY} run --rm --pid=host\
     ${DOCKER_EXTRA_PARAMS[@]} \
     ${DOCKER_IMAGE_NAME} \
     ${COMMAND[@]}
-

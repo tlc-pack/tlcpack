@@ -77,9 +77,15 @@ def update_conda(args):
     if "git_describe_version" in libversion:
         pub_ver, local_ver = libversion["git_describe_version"]()
 
+    # create initial yaml file
+    meta_yaml = os.path.join("conda", "recipe", "meta.yaml")
+    with open(meta_yaml, "w") as fo:
+        fo.write(open(os.path.join("conda", "recipe", "meta.in.yaml")).read())
+
     update(
-        os.path.join("conda", "recipe", "meta.yaml"),
-        [("(?<=version = ')[.0-9a-z]+", pub_ver)],
+        meta_yaml,
+        [(r"(?<=default_pkg_name = ')[^\']+", args.name),
+         (r"(?<=version = ')[.0-9a-z]+", pub_ver)],
         args.dry_run
     )
 
@@ -97,7 +103,7 @@ def main():
     parser.add_argument("name", type=str)
     args = parser.parse_args()
 
-    if 'nightly' not in args.name:
+    if "nightly" not in args.name:
         checkout_source(args.src, __stable_build__)
     else:
         checkout_source(args.src, "origin/main")
