@@ -8,6 +8,8 @@
 # CONTAINER_NAME: Type of the docker container used to build wheels, e.g.,
 #                 (cpu|cu100|cu101|cu102)
 #
+# The built image will show as tlpack/package-[type]:staging
+#
 
 if [[ $# -lt 1 ]]; then
     echo "$0 <CONTAINER_TYPE>"
@@ -18,7 +20,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 DOCKER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCKER_TAG=`cat "${DOCKER_DIR}/version.txt"`
+DOCKER_TAG="staging"
 
 # Get the command line arguments.
 CONTAINER_TYPE=$( echo "$1" | tr '[:upper:]' '[:lower:]' )

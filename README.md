@@ -2,7 +2,8 @@
 
 [![Conda-CPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Conda-CPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AConda-CPU-Nightly)
 [![Conda-GPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Conda-GPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AConda-GPU-Nightly)
-[![Wheel-CPU-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Wheel-CPU-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AWheel-CPU-Nightly)
+[![Wheel-WinMac-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Wheel-WinMac-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AWheel-WinMac-Nightly)
+[![Wheel-ManyLinux-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Wheel-Manylinux-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3AWheel-Manylinux-Nightly)
 [![Prune-Nightly](https://github.com/tlc-pack/tlcpack/workflows/Prune-Nightly/badge.svg)](https://github.com/tlc-pack/tlcpack/actions?query=workflow%3APrune-Nightly)
 
 Tensor learning compiler binary distribution package.
@@ -26,7 +27,7 @@ CONTAINER_NAME: Type of the docker container used to build wheels, e.g., (cpu|cu
 
 2. Checkout tvm and sync version
 
-```
+```bash
 git clone https://github.com/apache/tvm --recursive
 # synchronize the package version
 python common/sync_package.py [tlcpack|tlcpack-nightly]
@@ -38,7 +39,7 @@ will point to a stable build hashtag defined in common/sync_package.py
 
 3. Build tlcpack manylinux wheels.
 
-```
+```bash
 ./docker/bash.sh [docker-image] ./wheel/build_manylinux_wheel.sh --cuda none
 ```
 
@@ -53,6 +54,6 @@ The docker image is built in step 1 and needs to match the cuda version.
 4. Get the wheels
 
 The wheels are now available in
-```
-./tvm/python/repaird_wheels
+```bash
+./tvm/python/repaired_wheels
 ```

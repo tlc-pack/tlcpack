@@ -1,4 +1,6 @@
-{% set pkg_name = pkg_name | default('tlcpack') %}
+# This file is used as input for common/sync_package.py to generate meta.yaml
+{% set default_pkg_name = 'tlcpack' %}
+{% set pkg_name = pkg_name | default(default_pkg_name) %}
 {% set version = '0.7.0' %}
 
 {% set cuda_tag = cuda_version | replace('.', '') %} # [cuda]
