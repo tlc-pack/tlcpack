@@ -33,6 +33,9 @@ RUN bash /install/centos_install_python_package.sh 3.6
 RUN bash /install/centos_install_python_package.sh 3.7
 RUN bash /install/centos_install_python_package.sh 3.8
 
+COPY install/centos_install_auditwheel.sh /install/centos_install_auditwheel.sh
+RUN bash /install/centos_install_auditwheel.sh
+
 # Environment variables
 ENV PATH=/usr/local/cuda/bin:${PATH}
 ENV CPLUS_INCLUDE_PATH=/usr/local/cuda/include:${CPLUS_INCLUDE_PATH}

@@ -22,9 +22,6 @@ function in_array() {
 
 CUDA_OPTIONS=("none" "10.0" "10.1" "10.2")
 CUDA="none"
-HASH_TAG=""
-DEFAULT_TVM_URL="https://github.com/apache/tvm"
-TVM_URL="${DEFAULT_TVM_URL}"
 
 while [[ $# -gt 0 ]]; do
     arg="$1"
@@ -97,10 +94,15 @@ PATH="${CPYTHON36_PATH}/bin:$PATH" ${PYTHON36} setup.py bdist_wheel
 PATH="${CPYTHON37_PATH}/bin:$PATH" ${PYTHON37} setup.py bdist_wheel
 PATH="${CPYTHON38_PATH}/bin:$PATH" ${PYTHON38} setup.py bdist_wheel
 
-# repair python wheels
-mkdir -p repared_wheels
-auditwheel repair --plat ${AUDITWHEEL_PLAT} dist/tlcpack*cp36*.whl -w repaired_wheels/
-auditwheel repair --plat ${AUDITWHEEL_PLAT} dist/tlcpack*cp37*.whl -w repaired_wheels/
-auditwheel repair --plat ${AUDITWHEEL_PLAT} dist/tlcpack*cp38*.whl -w repaired_wheels/
+AUDITWHEEL_OPTS="--plat ${AUDITWHEEL_PLAT} -w repaired_wheels/"
+if [[ ${CUDA} != "none" ]]; then
+    AUDITWHEEL_OPTS="--skip-libs libcuda ${AUDITWHEEL_OPTS}"
+fi
 
+# repair python wheels
+# skip libcuda
+mkdir -p repared_wheels
+auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp36*.whl
+auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp37*.whl
+auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp38*.whl
 # skip tests since cuda might require the cuda runtime to be avaialble.

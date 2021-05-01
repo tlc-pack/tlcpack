@@ -53,9 +53,16 @@ def update(file_name, rewrites, dry_run=False):
                 output_file.write(l)
 
 
+def name_with_cuda(args):
+    """Update name with cuda version"""
+    if args.cuda == "none":
+        return args.name
+    return args.name + "-cu" + "".join(args.cuda.split("."))
+
+
 def update_setup(args):
     rewrites = [
-        (r'(?<=name=")[^\"]+', args.name),
+        (r'(?<=name=")[^\"]+', name_with_cuda(args)),
         (r'(?<=description=")[^\"]+',
          "Tensor learning compiler binary distribution"),
         (r'(?<=url=")[^\"]+', "https://tlcpack.ai")
@@ -100,6 +107,8 @@ def main():
     parser = argparse.ArgumentParser(description="Synchronize the package name and version.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--src", type=str, default="tvm")
+    parser.add_argument("--cuda", type=str, default="none",
+                        choices=["none", "10.0", "10.1", "10.2"])
     parser.add_argument("name", type=str)
     args = parser.parse_args()
 
