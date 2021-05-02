@@ -15,7 +15,6 @@ jobs:
   Build:
     strategy:
       matrix:
-        os: [ubuntu-latest]
         pkg: ['tlcpack-nightly']
         # matrix of build configs
         config:
@@ -28,7 +27,7 @@ jobs:
           - cuda: '10.2'
             image: 'tlcpack/package-cu101:v0.2'
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
