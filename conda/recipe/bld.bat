@@ -8,7 +8,7 @@ cd build
 cmake ^
       -DCMAKE_PREFIX_PATH=%LIBRARY_PREFIX% ^
       -DCMAKE_INSTALL_PREFIX:PATH=%LIBRARY_PREFIX% ^
-      -DUSE_LLVM=ON ^
+      -DUSE_LLVM="llvm-config --link-static" ^
       -DUSE_RPC=ON ^
       -DUSE_CPP_RPC=ON ^
       -DUSE_SORT=ON ^
