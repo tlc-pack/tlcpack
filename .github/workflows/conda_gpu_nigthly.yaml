@@ -14,8 +14,14 @@ jobs:
   Build:
     strategy:
       matrix:
-        cuda: ['cu100']
         pkg: ['tlcpack', 'tlcpack-nightly']
+        config:
+          - cuda: '10.0'
+            image: 'tlcpack/package-cu100:v0.3'
+          - cuda: '10.1'
+            image: 'tlcpack/package-cu101:v0.3'
+          - cuda: '10.2'
+            image: 'tlcpack/package-cu101:v0.3'
 
     runs-on: ubuntu-latest
 
@@ -42,12 +48,13 @@ jobs:
       run: |
         git clone https://github.com/apache/tvm tvm --recursive
     - name: Sync Package
-      run: python common/sync_package.py ${{ matrix.pkg }}
-    - name: Build@Cuda100
-      uses: ./.github/actions/docker-conda-cuda100
-      if: matrix.cuda == 'cu100'
-      with:
-        script: conda/build_cuda.sh conda/build_config.yaml
+      run: python common/sync_package.py --cuda ${{ matrix.config.cuda }} ${{ matrix.pkg }}
+    - name: Build
+      env:
+        IMAGE: ${{ matrix.config.image }}
+        CUDA: ${{ matrix.config.cuda }}
+      run: |
+        docker/bash.sh --no-gpu $IMAGE ./conda/build_cuda.sh  conda/build_config.yaml --cuda $CUDA
     - name: Conda-Deploy
       if: github.ref == 'refs/heads/main'
       shell: bash -l {0}
