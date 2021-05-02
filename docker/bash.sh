@@ -10,11 +10,19 @@
 #     Execute command in the docker image, non-interactive
 #
 if [ "$#" -lt 1 ]; then
-    echo "Usage: docker/bash.sh <CONTAINER_NAME> [COMMAND]"
+    echo "Usage: docker/bash.sh <CONTAINER_NAME> [--no-gpu] [COMMAND]"
     exit -1
 fi
 
+if [ "$1" == "--no-gpu" ]; then
+    ENABLE_NV_DOCKER=0
+    shift
+else
+    ENABLE_NV_DOCKER=1
+fi
+
 DOCKER_IMAGE_NAME=("$1")
+
 
 if [ "$#" -eq 1 ]; then
     COMMAND="bash"
@@ -41,12 +49,16 @@ else
 fi
 
 if [[ "${DOCKER_IMAGE_NAME}" == *"cu"* ]]; then
-    if ! type "nvidia-docker" 1> /dev/null 2> /dev/null
-    then
-        DOCKER_BINARY="docker"
-        CUDA_ENV=" --gpus all "${CUDA_ENV}
+    if [ "$ENABLE_NV_DOCKER" -eq 1 ]; then
+        if ! type "nvidia-docker" 1> /dev/null 2> /dev/null
+        then
+            DOCKER_BINARY="docker"
+            CUDA_ENV=" --gpus all "${CUDA_ENV}
+        else
+            DOCKER_BINARY="nvidia-docker"
+        fi
     else
-        DOCKER_BINARY="nvidia-docker"
+        DOCKER_BINARY="docker"
     fi
 else
     DOCKER_BINARY="docker"
