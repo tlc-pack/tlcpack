@@ -19,13 +19,13 @@ jobs:
         # matrix of build configs
         config:
           - cuda: 'none'
-            image: 'tlcpack/package-cpu:v0.2'
+            image: 'tlcpack/package-cpu:v0.3'
           - cuda: '10.0'
-            image: 'tlcpack/package-cu100:v0.2'
+            image: 'tlcpack/package-cu100:v0.3'
           - cuda: '10.1'
-            image: 'tlcpack/package-cu101:v0.2'
+            image: 'tlcpack/package-cu101:v0.3'
           - cuda: '10.2'
-            image: 'tlcpack/package-cu102:v0.2'
+            image: 'tlcpack/package-cu102:v0.3'
 
     runs-on: ubuntu-latest
 
