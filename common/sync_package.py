@@ -107,6 +107,11 @@ def main():
     parser = argparse.ArgumentParser(description="Synchronize the package name and version.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--src", type=str, default="tvm")
+    parser.add_argument("--revision",
+                        type=str,
+                        default="origin/main",
+                        help="Specify a TVM revision to build packages from. "
+                             "Defaults to 'origin/main'")
     parser.add_argument("--cuda", type=str, default="none",
                         choices=["none", "10.0", "10.1", "10.2"])
     parser.add_argument("name", type=str)
@@ -115,7 +120,7 @@ def main():
     if "nightly" not in args.name:
         checkout_source(args.src, __stable_build__)
     else:
-        checkout_source(args.src, "origin/main")
+        checkout_source(args.src, args.revision)
 
     update_setup(args)
     update_conda(args)
