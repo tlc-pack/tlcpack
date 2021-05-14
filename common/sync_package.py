@@ -105,16 +105,30 @@ def update_conda(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Synchronize the package name and version.")
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--src", type=str, default="tvm")
+    parser.add_argument("--dry-run",
+                        action="store_true",
+                        help="Run the syncronization process without modifying any files.")
+    parser.add_argument("--src",
+                        type=str,
+                        metavar="DIR_NAME",
+                        default="tvm",
+                        help="Set the directory in which tvm souces will be checked out. "
+                             "Defaults to 'tvm'")
     parser.add_argument("--revision",
                         type=str,
                         default="origin/main",
                         help="Specify a TVM revision to build packages from. "
                              "Defaults to 'origin/main'")
-    parser.add_argument("--cuda", type=str, default="none",
-                        choices=["none", "10.0", "10.1", "10.2"])
-    parser.add_argument("name", type=str)
+    parser.add_argument("--cuda",
+                        type=str,
+                        default="none",
+                        choices=["none", "10.0", "10.1", "10.2"],
+                        help="CUDA version to be linked to the resultant binaries,"
+                             "or none, to disable CUDA. Defaults to none.")
+    parser.add_argument("name",
+                        type=str,
+                        help="Type of package to be built, currently 'tlcpack' or 'tlcpack-nightly'. "
+                             "Required.")
     args = parser.parse_args()
 
     if "nightly" not in args.name:
