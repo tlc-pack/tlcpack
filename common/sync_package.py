@@ -53,16 +53,16 @@ def update(file_name, rewrites, dry_run=False):
                 output_file.write(l)
 
 
-def name_with_cuda(args):
+def name_with_cuda(args, package_name):
     """Update name with cuda version"""
     if args.cuda == "none":
-        return args.name
-    return args.name + "-cu" + "".join(args.cuda.split("."))
+        return package_name
+    return package_name + "-cu" + "".join(args.cuda.split("."))
 
 
-def update_setup(args):
+def update_setup(args, package_name):
     rewrites = [
-        (r'(?<=name=")[^\"]+', name_with_cuda(args)),
+        (r'(?<=name=")[^\"]+', name_with_cuda(args, package_name)),
         (r'(?<=description=")[^\"]+',
          "Tensor learning compiler binary distribution"),
         (r'(?<=url=")[^\"]+', "https://tlcpack.ai")
@@ -70,7 +70,7 @@ def update_setup(args):
     update(os.path.join(args.src, "python", "setup.py"), rewrites, args.dry_run)
 
 
-def update_conda(args):
+def update_conda(args, package_name):
     version_py = os.path.join("tvm", "version.py")
     libversion = {"__file__": version_py}
     exec(
@@ -91,14 +91,14 @@ def update_conda(args):
 
     update(
         meta_yaml,
-        [(r"(?<=default_pkg_name = ')[^\']+", args.name),
+        [(r"(?<=default_pkg_name = ')[^\']+", package_name),
          (r"(?<=version = ')[.0-9a-z]+", pub_ver)],
         args.dry_run
     )
 
     update(
         os.path.join("conda", "build_config.yaml"),
-        [("(?<=pkg_name: ')[^\']+", args.name)],
+        [("(?<=pkg_name: ')[^\']+", package_name)],
         args.dry_run
     )
 
@@ -125,19 +125,26 @@ def main():
                         choices=["none", "10.0", "10.1", "10.2"],
                         help="CUDA version to be linked to the resultant binaries,"
                              "or none, to disable CUDA. Defaults to none.")
-    parser.add_argument("name",
+    parser.add_argument("--package-name",
                         type=str,
-                        help="Type of package to be built, currently 'tlcpack' or 'tlcpack-nightly'. "
-                             "Required.")
+                        default="",
+                        help="Name of the produced Python packages. Optional. "
+                             "Defaults to the provided build_type.")
+    parser.add_argument("build_type",
+                        type=str,
+                        help="Type of package to be built. Use 'tlcpack' to build the last stable "
+                             "revision or 'tlcpack-nightly' build the value provided via --revision.")
     args = parser.parse_args()
 
-    if "nightly" not in args.name:
+    package_name = args.package_name or args.build_type
+
+    if "nightly" not in args.build_type:
         checkout_source(args.src, __stable_build__)
     else:
         checkout_source(args.src, args.revision)
 
-    update_setup(args)
-    update_conda(args)
+    update_setup(args, package_name)
+    update_conda(args, package_name)
 
 
 if __name__ == "__main__":
