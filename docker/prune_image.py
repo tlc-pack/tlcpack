@@ -62,6 +62,7 @@ def extract_order(tag):
 
 def list_images(prefix):
     images = {}
+    unmatch_list = []
     for line in run_cmd(["docker", "image", "ls"]).split("\n")[1:]:
         if not line:
             continue
@@ -69,13 +70,14 @@ def list_images(prefix):
         name = arr[0]
         tag = arr[1]
         if not name.startswith(prefix) or tag == "latest":
+            unmatch_list.append((name, tag))
             continue
         order = extract_order(tag)
         if name in images:
             images[name].append((tag, order))
         else:
             images[name] = [(tag, order)]
-    return images
+    return images, unmatch_list
 
 
 def run_prune(args, images):
@@ -118,10 +120,16 @@ def main():
     parser.add_argument("--keep-top", type=int, default=1)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--prefix", type=str, default="tlcpack")
+    parser.add_argument("--clean-unmatch", action="store_true")
 
     args = parser.parse_args()
-    images = list_images(args.prefix)
+    images, unmatch_list = list_images(args.prefix)
     remove_list = run_prune(args, images)
+    if args.clean_unmatch:
+        for name, tag in unmatch_list:
+            print("remove  %s:%s" % (name, tag))
+            remove_list.append((name, tag))
+
     if remove_list:
         delete_images(remove_list, args.dry_run)
 
