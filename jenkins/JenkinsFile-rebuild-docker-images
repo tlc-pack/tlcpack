@@ -1,0 +1,320 @@
+#!groovy
+// -*- mode: groovy -*-
+
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+// Command to rebuild a docker container
+docker_build = 'docker/build.sh'
+
+// Global variable to store the Docker tag generated
+// by this build.
+TVM_DOCKER_TAG=""
+
+
+def per_exec_ws(folder) {
+  return "workspace/exec_${env.EXECUTOR_NUMBER}/" + folder
+}
+
+
+def upload_to_docker_hub(image_type) {
+  // 'docker/build.sh' makes some assumptions on the images produced.
+  // The expected name is composed by ${BUILD_TAG}.${image_type}:${TVM_DOCKER_TAG}
+
+  sh """
+    docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_KEY}
+
+    docker tag \
+      ${BUILD_TAG}.${image_type}:${TVM_DOCKER_TAG} \
+      ${DOCKERHUB_USER}/${image_type}:${TVM_DOCKER_TAG}
+
+    docker push ${DOCKERHUB_USER}/${image_type}:${TVM_DOCKER_TAG}
+  """
+
+}
+
+
+def cleanup_docker_image(image_type) {
+  // Remove Docker images created by previous steps.
+  // With the use of -f, makes it not fail in case the image
+  // does not exist.
+
+  sh """
+    docker rmi -f \
+      ${BUILD_TAG}.${image_type}:${TVM_DOCKER_TAG} \
+      ${DOCKERHUB_USER}/${image_type}:${TVM_DOCKER_TAG}
+  """
+}
+
+
+def init_git() {
+  // Add more info about job node
+  sh """
+     echo "INFO: NODE_NAME=${NODE_NAME} EXECUTOR_NUMBER=${EXECUTOR_NUMBER}"
+     """
+
+  sh "git clone ${TVM_GIT_REPO_URL}"
+
+  dir('tvm') {
+    script{
+      // At the beginning of a build, the $TVM_CURRENT_REF is set
+      // so that all images are generated using strictly the same
+      // TVM git revision.
+      sh "git checkout ${TVM_CURRENT_REF}"
+    }
+  } // dir
+}
+
+
+pipeline {
+  agent { node { label 'CPU' } }
+
+//  options {
+      //timestamps()
+  //}
+
+  environment {
+      DOCKERHUB_USER = "tlcpackstaging"
+      DOCKERHUB_KEY = credentials('dockerhub-tlcpackstaging-key')
+      DISCORD_WEBHOOK = credentials('discord-webhook-url')
+  }
+
+  parameters {
+    string(name:"TVM_GIT_REV",
+           defaultValue: "main",
+           description: 'Git revision to checkout.')
+  }
+
+  stages {
+
+    stage('Prepare') {
+      agent { node { label 'CPU' } }
+      steps {
+        ws(per_exec_ws("tvm/docker-prepare")) {
+          cleanWs();
+          sh "git clone ${TVM_GIT_REPO_URL}"
+          dir('tvm'){
+            script{
+              TVM_CURRENT_REF = sh (
+                script: 'git rev-parse HEAD',
+                returnStdout: true
+              ).trim()
+
+              TIMESTAMP_TAG = sh (
+                script: 'date "+%Y_%m_%d-%H%M%S"',
+                returnStdout: true
+              ).trim()
+
+              TVM_CURRENT_SHORT_REF = sh (
+                script: 'git rev-parse --short HEAD',
+                returnStdout: true
+              ).trim()
+
+              currentBuild.displayName = "${TVM_CURRENT_SHORT_REF}"
+              TVM_DOCKER_TAG = "${TIMESTAMP_TAG}-${TVM_CURRENT_SHORT_REF}"
+              
+            }
+          }
+        }
+      } // steps
+      post {
+        always {
+          cleanWs();
+        }
+      } // post
+    } // stage: Prepare
+
+    stage('Build') {
+      parallel {
+
+        stage('ci-cpu') {
+          agent { node { label 'CPU' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-cpu")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_cpu --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_cpu");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_cpu");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('ci-gpu') {
+          agent { node { label 'GPUBUILD' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-gpu")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_gpu --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_gpu");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_gpu");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('ci-lint') {
+          agent { node { label 'CPU' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-lint")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_lint --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_lint");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_lint");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('ci-wasm') {
+          agent { node { label 'CPU' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-wasm")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_wasm --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_wasm");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_wasm");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('ci-i386') {
+          agent { node { label 'CPU' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-i386")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_i386 --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_i386");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_i386");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('ci-arm') {
+          agent { node { label 'ARM' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-arm")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_arm --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_arm");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_arm");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('ci-qemu') {
+          agent { node { label 'CPU' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-qemu")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_qemu --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_qemu");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_qemu");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+      } // parallel
+    } // stage: Build
+  } // stages
+  post {
+    success {
+      discordSend description: "New images published on DockerHub with tag `${TVM_DOCKER_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${TVM_DOCKER_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_qemu`, `ci_wasm`.",
+        link: "https://hub.docker.com/u/tlcpackstaging/",
+        result: currentBuild.currentResult,
+        title: "${JOB_NAME}",
+        webhookURL: "${DISCORD_WEBHOOK}"
+    }
+    unsuccessful {
+      discordSend description: "Failed to generate Docker images using TVM hash `${TVM_GIT_REPO_URL}`. See logs at ${BUILD_URL}.",
+        link: "${BUILD_URL}",
+        result: currentBuild.currentResult,
+        title: "${JOB_NAME}",
+        webhookURL: "${DISCORD_WEBHOOK}"
+    }
+    always {
+      cleanWs();
+    }
+  } // post
+} // pipeline
