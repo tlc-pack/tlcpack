@@ -81,7 +81,7 @@ def init_git() {
 
 
 pipeline {
-  agent { node { label 'CPU' } }
+  agent { node { label 'CPU-DOCKER' } }
 
 //  options {
       //timestamps()
@@ -102,7 +102,7 @@ pipeline {
   stages {
 
     stage('Prepare') {
-      agent { node { label 'CPU' } }
+      agent { node { label 'CPU-DOCKER' } }
       steps {
         ws(per_exec_ws("tvm/docker-prepare")) {
           cleanWs();
@@ -115,7 +115,7 @@ pipeline {
               ).trim()
 
               TIMESTAMP_TAG = sh (
-                script: 'date "+%Y_%m_%d-%H%M%S"',
+                script: 'date "+%Y%m%d-%H%M%S"',
                 returnStdout: true
               ).trim()
 
@@ -142,7 +142,7 @@ pipeline {
       parallel {
 
         stage('ci-cpu') {
-          agent { node { label 'CPU' } }
+          agent { node { label 'CPU-DOCKER' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-cpu")) {
               cleanWs();
@@ -164,7 +164,7 @@ pipeline {
         } // stage
 
         stage('ci-gpu') {
-          agent { node { label 'GPUBUILD' } }
+          agent { node { label 'GPU-DOCKER' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-gpu")) {
               cleanWs();
@@ -186,7 +186,7 @@ pipeline {
         } // stage
 
         stage('ci-lint') {
-          agent { node { label 'CPU' } }
+          agent { node { label 'CPU-DOCKER' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-lint")) {
               cleanWs();
