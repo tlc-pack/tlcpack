@@ -60,17 +60,16 @@ def name_with_cuda(args, package_name):
     return package_name + "-cu" + "".join(args.cuda.split("."))
 
 
-def update_setup(args, package_name):
-    rewrites = [
-        (r'(?<=name=")[^\"]+', name_with_cuda(args, package_name)),
-        (r'(?<=description=")[^\"]+',
-         "Tensor learning compiler binary distribution"),
-        (r'(?<=url=")[^\"]+', "https://tlcpack.ai")
-    ]
-    update(os.path.join(args.src, "python", "setup.py"), rewrites, args.dry_run)
+def get_version_tag():
+    """
+    Collect version strings using TVM's python/tvm/version.py.
 
-
-def update_conda(args, package_name):
+    Return a tuple with two version strings:
+    - pub_ver: includes major, minor and dev with the number of
+               changes since last release, e.g. "0.8.dev1473".
+    - local_ver: includes major, minor, dev and last git hash
+                 e.g. "0.8.dev1473+gb7488ef47".
+    """
     version_py = os.path.join("tvm", "version.py")
     libversion = {"__file__": version_py}
     exec(
@@ -83,6 +82,32 @@ def update_conda(args, package_name):
 
     if "git_describe_version" in libversion:
         pub_ver, local_ver = libversion["git_describe_version"]()
+
+    return pub_ver, local_ver
+
+
+def update_libinfo(args):
+    _ , local_ver = get_version_tag()
+
+    update(
+        os.path.join(args.src, "python", "tvm", "_ffi", "libinfo.py"),
+        [("(?<=__version__ = \")[^\"]+", local_ver)],
+        args.dry_run
+    )
+
+
+def update_setup(args, package_name):
+    rewrites = [
+        (r'(?<=name=")[^\"]+', name_with_cuda(args, package_name)),
+        (r'(?<=description=")[^\"]+',
+         "Tensor learning compiler binary distribution"),
+        (r'(?<=url=")[^\"]+', "https://tlcpack.ai")
+    ]
+    update(os.path.join(args.src, "python", "setup.py"), rewrites, args.dry_run)
+
+
+def update_conda(args, package_name):
+    pub_ver, _ = get_version_tag()
 
     # create initial yaml file
     meta_yaml = os.path.join("conda", "recipe", "meta.yaml")
@@ -143,6 +168,7 @@ def main():
     else:
         checkout_source(args.src, args.revision)
 
+    update_libinfo(args)
     update_setup(args, package_name)
     update_conda(args, package_name)
 
