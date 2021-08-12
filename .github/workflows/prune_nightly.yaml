@@ -53,7 +53,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
       run: >-
-        python -m pip install -y github3.py requests &&
+        python -m pip install github3.py requests &&
         python wheel/wheel_prune_and_sync.py
     - name: Conda-Prune
       if: github.ref == 'refs/heads/main'
