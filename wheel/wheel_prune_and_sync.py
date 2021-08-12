@@ -6,6 +6,8 @@ import argparse
 import subprocess
 from datetime import datetime
 
+import requests
+
 
 def py_str(cstr):
     return cstr.decode("utf-8")
@@ -65,6 +67,16 @@ def group_wheels(wheels):
     return group_map
 
 
+def url_is_valid(url):
+    """Check if a given URL is valid, i.e. it returns 200 OK when requested."""
+    r = requests.get(url)
+
+    if r.status_code != 200:
+        print("Warning: HTTP code %s for url %s" % (r.status_code, url))
+
+    return r.status_code == 200
+
+
 def run_prune(args, group_map):
     keep_list = []
     remove_list = []
@@ -90,7 +102,7 @@ def list_wheels(repo):
     for release in repo.releases():
         tag = release.tag_name
         for asset in release.assets():
-            if asset.name.endswith(".whl"):
+            if asset.name.endswith(".whl") and url_is_valid(asset.browser_download_url):
                 wheels.append(asset)
     return wheels
 
