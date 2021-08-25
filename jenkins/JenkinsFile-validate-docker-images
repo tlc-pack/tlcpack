@@ -1,0 +1,217 @@
+#!groovy
+// -*- mode: groovy -*-
+
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+// Command to rebuild a docker container
+docker_build = 'docker/build.sh'
+
+DOCKER_TAG=""
+VALIDATED_SUFFIX="validated"
+DOCKER_VALIDATED_TAG=""
+
+
+def per_exec_ws(folder) {
+  return "workspace/exec_${env.EXECUTOR_NUMBER}/" + folder
+}
+
+
+def retag_and_upload_to_docker_hub(image_type) {
+  // This will pull an image from the repository, i.e. tlcpackstaging
+  // retag it with validated tag and upload it to the same repository.
+  //
+  // Pulling the image is mandatory, and the subsequent push should
+  // happen very fast, as all the layers already exist in the 
+  // remote Docker registry.
+
+  sh """
+    docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_KEY}
+
+    docker pull ${DOCKERHUB_USER}/${image_type}:${DOCKER_TAG}
+
+    docker tag \
+      ${DOCKERHUB_USER}/${image_type}:${DOCKER_TAG} \
+      ${DOCKERHUB_USER}/${image_type}:${DOCKER_VALIDATED_TAG}
+
+    docker push ${DOCKERHUB_USER}/${image_type}:${DOCKER_VALIDATED_TAG}
+  """
+
+}
+
+
+def cleanup_docker_image(image_type) {
+  // Delete images created/tagged by previous steps.
+
+  sh """
+    docker rmi -f \
+      ${DOCKERHUB_USER}/${image_type}:${DOCKER_TAG} \
+      ${DOCKERHUB_USER}/${image_type}:${DOCKER_VALIDATED_TAG}
+  """
+}
+
+
+pipeline {
+  agent { node { label 'CPU-DOCKER' } }
+
+  environment {
+      DOCKERHUB_USER = "tlcpackstaging"
+      DOCKERHUB_KEY = credentials('dockerhub-tlcpackstaging-key')
+      DISCORD_WEBHOOK = credentials('discord-webhook-url')
+  }
+
+  parameters {
+    string(name:"tlcpack_staging_tag",
+           defaultValue: "",
+           description: 'Required. Tag on tlcpackstaging docker hub, to be validated. See: https://hub.docker.com/u/tlcpackstaging')
+  }
+
+  stages {
+
+    stage('Prepare') {
+      steps {
+        ws(per_exec_ws("tvm/docker-prepare")) {
+          cleanWs();
+          script {
+            // set the build name, with the tag being validated
+            currentBuild.displayName = "${params.tlcpack_staging_tag}"
+
+            DOCKER_TAG = "${params.tlcpack_staging_tag}"
+            DOCKER_VALIDATED_TAG = "${params.tlcpack_staging_tag}-${VALIDATED_SUFFIX}"
+          }
+        }
+      } // steps
+      post {
+        always {
+          cleanWs();
+        }
+      } // post
+    } // stage: Prepare
+
+    stage('Validate') {
+      steps {
+        ws(per_exec_ws("tvm/docker-prepare")) {
+          cleanWs();
+          // trigger build on "docker-image-run-tests", which uses the same
+          // Jenkinsfile from TVM, as want to keep up with any updates done
+          // to that file as part of the validation.
+          build job: 'docker-image-run-tests',
+            wait: true,
+            propagate: true,
+            parameters: [
+              [$class: 'StringParameterValue', name: 'ci_lint_param', value: "${DOCKERHUB_USER}/ci_lint:${DOCKER_TAG}"],
+              [$class: 'StringParameterValue', name: 'ci_cpu_param', value: "${DOCKERHUB_USER}/ci_cpu:${DOCKER_TAG}"],
+              [$class: 'StringParameterValue', name: 'ci_gpu_param', value: "${DOCKERHUB_USER}/ci_gpu:${DOCKER_TAG}"],
+              [$class: 'StringParameterValue', name: 'ci_wasm_param', value: "${DOCKERHUB_USER}/ci_wasm:${DOCKER_TAG}"],
+              [$class: 'StringParameterValue', name: 'ci_i386_param', value: "${DOCKERHUB_USER}/ci_i386:${DOCKER_TAG}"],
+              [$class: 'StringParameterValue', name: 'ci_qemu_param', value: "${DOCKERHUB_USER}/ci_qemu:${DOCKER_TAG}"],
+              [$class: 'StringParameterValue', name: 'ci_arm_param', value: "${DOCKERHUB_USER}/ci_arm:${DOCKER_TAG}"]
+            ]
+        }
+      } // steps
+      post {
+        always {
+          cleanWs();
+        }
+      } // post
+    } // stage: Validate
+
+    stage('Tag') {
+      parallel {
+
+        stage('cpu') {
+          agent { node { label 'CPU-DOCKER' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-cpu")) {
+              cleanWs();
+              // many images can be processed on a single CPU node
+              retag_and_upload_to_docker_hub("ci_lint");
+              retag_and_upload_to_docker_hub("ci_cpu");
+              retag_and_upload_to_docker_hub("ci_wasm");
+              retag_and_upload_to_docker_hub("ci_i386");
+              retag_and_upload_to_docker_hub("ci_qemu");
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_lint");
+              cleanup_docker_image("ci_cpu");
+              cleanup_docker_image("ci_wasm");
+              cleanup_docker_image("ci_i386");
+              cleanup_docker_image("ci_qemu");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('gpu') {
+          agent { node { label 'GPU-DOCKER' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-gpu")) {
+              cleanWs();
+              retag_and_upload_to_docker_hub("ci_gpu");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_gpu");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+        stage('arm') {
+          agent { node { label 'ARM' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-arm")) {
+              cleanWs();
+              retag_and_upload_to_docker_hub("ci_arm");
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_arm");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
+      }
+    }
+
+  } // stages
+  post {
+    success {
+      discordSend description: "Validated images published on DockerHub with tag `${DOCKER_VALIDATED_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${DOCKER_VALIDATED_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_qemu`, `ci_wasm`.",
+        link: "https://hub.docker.com/u/tlcpackstaging/",
+        result: currentBuild.currentResult,
+        title: "${JOB_NAME}",
+        webhookURL: "${DISCORD_WEBHOOK}"
+    }
+    unsuccessful {
+      discordSend description: "Failed to validate Docker images with tag `${DOCKER_TAG}`. See logs at ${BUILD_URL}.",
+        link: "${BUILD_URL}",
+        result: currentBuild.currentResult,
+        title: "${JOB_NAME}",
+        webhookURL: "${DISCORD_WEBHOOK}"
+    }
+    always {
+      cleanWs();
+    }
+  } // post
+} // pipeline
