@@ -307,7 +307,7 @@ pipeline {
         webhookURL: "${DISCORD_WEBHOOK}"
     }
     unsuccessful {
-      discordSend description: "Failed to generate Docker images using TVM hash `${TVM_GIT_REPO_URL}`. See logs at ${BUILD_URL}.",
+      discordSend description: "Failed to generate Docker images using TVM hash `${TVM_CURRENT_SHORT_REF}`. See logs at ${BUILD_URL}.",
         link: "${BUILD_URL}",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
