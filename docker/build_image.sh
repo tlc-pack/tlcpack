@@ -6,7 +6,7 @@
 # Usage: build_image.sh <CONTAINER_TYPE>
 #
 # CONTAINER_NAME: Type of the docker container used to build wheels, e.g.,
-#                 (cpu|cu100|cu101|cu102)
+#                 (cpu|cu100|cu101|cu102|cu111)
 #
 # The built image will show as tlpack/package-[type]:staging
 #
@@ -15,7 +15,7 @@ if [[ $# -lt 1 ]]; then
     echo "$0 <CONTAINER_TYPE>"
     echo
     echo "CONTAINER_NAME: Type of the docker container used to build wheels, e.g.,"
-    echo "                (cpu|cu100|cu101|cu102)"
+    echo "                (cpu|cu100|cu101|cu102|cu111)"
     exit -1
 fi
 

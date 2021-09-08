@@ -147,7 +147,7 @@ def main():
     parser.add_argument("--cuda",
                         type=str,
                         default="none",
-                        choices=["none", "10.0", "10.1", "10.2"],
+                        choices=["none", "10.0", "10.1", "10.2", "11.1"],
                         help="CUDA version to be linked to the resultant binaries,"
                              "or none, to disable CUDA. Defaults to none.")
     parser.add_argument("--package-name",

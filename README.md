@@ -22,7 +22,7 @@ Checkout [.github/workflows](.github/workflows)
 ```bash
 ./docker/build_image.sh <CONTAINER_TYPE>
 
-CONTAINER_NAME: Type of the docker container used to build wheels, e.g., (cpu|cu100|cu101|cu102)
+CONTAINER_NAME: Type of the docker container used to build wheels, e.g., (cpu|cu100|cu101|cu102|cu111)
 ```
 
 2. Checkout tvm and sync version

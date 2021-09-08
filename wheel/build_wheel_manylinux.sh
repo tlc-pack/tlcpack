@@ -2,10 +2,11 @@
 
 source /multibuild/manylinux_utils.sh
 
+
 function usage() {
     echo "Usage: $0 [--cuda CUDA]"
     echo
-    echo -e "--cuda {none 10.0 10.1 10.2}"
+    echo -e "--cuda {none 10.0 10.1 10.2 11.1}"
     echo -e "\tSpecify the CUDA version in the TVM (default: none)."
 }
 
@@ -20,7 +21,7 @@ function in_array() {
     return 1
 }
 
-CUDA_OPTIONS=("none" "10.0" "10.1" "10.2")
+CUDA_OPTIONS=("none" "10.0" "10.1" "10.2" "11.1")
 CUDA="none"
 
 while [[ $# -gt 0 ]]; do
@@ -47,7 +48,7 @@ done
 if ! in_array "${CUDA}" "${CUDA_OPTIONS[*]}" ; then
     echo "Invalid CUDA option: ${CUDA}"
     echo
-    echo 'CUDA can only be {"none", "10.0", "10.1", "10.2"}'
+    echo 'CUDA can only be {"none", "10.0", "10.1", "10.2", "11.1"}'
     exit -1
 fi
 
@@ -103,7 +104,7 @@ fi
 # repair python wheels
 # skip libcuda
 mkdir -p repared_wheels
-auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp36*.whl
-auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp37*.whl
-auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp38*.whl
+auditwheel repair ${AUDITWHEEL_OPTS} dist/tlc*cp36*.whl
+auditwheel repair ${AUDITWHEEL_OPTS} dist/tlc*cp37*.whl
+auditwheel repair ${AUDITWHEEL_OPTS} dist/tlc*cp38*.whl
 # skip tests since cuda might require the cuda runtime to be avaialble.
