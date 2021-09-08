@@ -64,4 +64,6 @@ jobs:
         python conda/anaconda_prune.py tlcpack/tlcpack-nightly &&
         python conda/anaconda_prune.py tlcpack/tlcpack-nightly-libs &&
         python conda/anaconda_prune.py tlcpack/tlcpack-nightly-cu100 &&
-        python conda/anaconda_prune.py tlcpack/tlcpack-nightly-cu100-libs
+        python conda/anaconda_prune.py tlcpack/tlcpack-nightly-cu100-libs &&
+        python conda/anaconda_prune.py tlcpack/tlcpack-nightly-cu111 &&
+        python conda/anaconda_prune.py tlcpack/tlcpack-nightly-cu111-libs
