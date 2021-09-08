@@ -51,3 +51,5 @@ ENV AUDITWHEEL_PLAT=manylinux2014_x86_64
 # The upstream PyTorch image comes with both 10.2 and 11.1, with the default symlinked to 10.2
 # To simplify the build process, symlink the default to 11.1 explicitly
 RUN rm -rf /usr/local/cuda && ln -sf /usr/local/cuda-11.1 /usr/local/cuda
+ENV CUDA_VERSION=11.1
+

@@ -4,6 +4,7 @@
 {% set version = '0.7.0' %}
 
 {% set cuda_tag = cuda_version | replace('.', '') %} # [cuda]
+{% set cudnn_v = '8.1.0' if cuda_version.startswith('11') else '7.6.0' %} # [cuda]
 {% set pkg_name = pkg_name + '-cu' + cuda_tag %} # [cuda]
 {% set build_tag = environ.get('GIT_BUILD_STR', 'unknown') %}
 {% set build_tag = build_tag + '_h' + PKG_HASH + '_' + PKG_BUILDNUM %}
@@ -47,10 +48,10 @@ outputs:
         - zlib
         - llvmdev ==10.0.0
         - {{ pin_compatible('cudatoolkit', lower_bound=cuda_version, max_pin='x.x') }}  # [cuda]
-        - {{ pin_compatible('cudnn', lower_bound='7.6.0', max_pin='x') }}  # [cuda]
+        - {{ pin_compatible('cudnn', lower_bound=cudnn_v, max_pin='x') }}  # [cuda]
       run:
         - {{ pin_compatible('cudatoolkit', lower_bound=cuda_version, max_pin='x.x') }}  # [cuda]
-        - {{ pin_compatible('cudnn', lower_bound='7.6.0', max_pin='x') }}  # [cuda]
+        - {{ pin_compatible('cudnn', lower_bound=cudnn_v, max_pin='x') }}  # [cuda]
 
   - name: {{ pkg_name }}
     script: install_python_pkg.sh  # [not win]
