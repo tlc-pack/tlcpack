@@ -125,7 +125,7 @@ pipeline {
               ).trim()
 
               currentBuild.displayName = "${TVM_CURRENT_SHORT_REF}"
-              TVM_DOCKER_TAG = "${TIMESTAMP_TAG}-${TVM_CURRENT_SHORT_REF}"
+              TVM_DOCKER_TAG = "${TIMESTAMP_TAG}-${TVM_CURRENT_SHORT_REF}${TVM_DOCKER_TAG_SUFFIX}"
               
             }
           }
