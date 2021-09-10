@@ -96,7 +96,10 @@ pipeline {
   parameters {
     string(name:"TVM_GIT_REV",
            defaultValue: "main",
-           description: 'Git revision to checkout.')
+           description: 'Git revision to checkout.'),
+    string(name:"tvm_docker_tag_suffix",
+           defaultValue: "",
+           description: 'Required. Tag on tlcpackstaging docker hub, to be validated. See: https://hub.docker.com/u/tlcpackstaging.')
   }
 
   stages {
