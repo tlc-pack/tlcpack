@@ -96,7 +96,7 @@ pipeline {
     string(name:"TVM_GIT_REV",
            defaultValue: "main",
            description: 'Git revision to checkout.'),
-    string(name:"DOCKERHB_USER", defaultValue: "tlcpackstaging",
+    string(name:"DOCKERHUB_USER", defaultValue: "tlcpackstaging",
            description: 'User that pushes images to Dockerhub.')
   }
 
