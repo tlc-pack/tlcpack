@@ -88,7 +88,6 @@ pipeline {
   //}
 
   environment {
-      DOCKERHUB_USER = "tlcpackstaging"
       DOCKERHUB_KEY = credentials('dockerhub-tlcpackstaging-key')
       DISCORD_WEBHOOK = credentials('discord-webhook-url')
   }
@@ -96,7 +95,9 @@ pipeline {
   parameters {
     string(name:"TVM_GIT_REV",
            defaultValue: "main",
-           description: 'Git revision to checkout.')
+           description: 'Git revision to checkout.'),
+    string(name:"DOCKERHUB_USER", defaultValue: "tlcpackstaging",
+           description: 'User that pushes images to Dockerhub.')
   }
 
   stages {
