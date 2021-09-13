@@ -88,7 +88,6 @@ pipeline {
   //}
 
   environment {
-      DOCKERHUB_USER = "tlcpackstaging"
       DOCKERHUB_KEY = credentials('dockerhub-tlcpackstaging-key')
       DISCORD_WEBHOOK = credentials('discord-webhook-url')
   }
@@ -97,9 +96,8 @@ pipeline {
     string(name:"TVM_GIT_REV",
            defaultValue: "main",
            description: 'Git revision to checkout.'),
-    string(name:"tvm_docker_tag_prefix",
-           defaultValue: "",
-           description: 'Prefix used to disambiguate staging and production docker-daily builds.')
+    string(name:"DOCKERHB_USER", defaultValue: "tlcpackstaging",
+           description: 'User that pushes images to Dockerhub.')
   }
 
   stages {
@@ -128,7 +126,7 @@ pipeline {
               ).trim()
 
               currentBuild.displayName = "${TVM_CURRENT_SHORT_REF}"
-              TVM_DOCKER_TAG = "${params.tvm_docker_tag_prefix}${TIMESTAMP_TAG}-${TVM_CURRENT_SHORT_REF}"
+              TVM_DOCKER_TAG = "${TIMESTAMP_TAG}-${TVM_CURRENT_SHORT_REF}"
               
             }
           }
