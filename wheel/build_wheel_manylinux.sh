@@ -66,6 +66,7 @@ echo set\(USE_GRAPH_RUNTIME ON\) >> config.cmake
 echo set\(USE_ETHOSN /opt/arm/ethosn-driver\) >> config.cmake
 echo set\(USE_ARM_COMPUTE_LIB /opt/arm/acl\) >> config.cmake
 echo set\(USE_MICRO ON\) >> config.cmake
+echo set\(USE_MICRO_STANDALONE_RUNTIME ON\) >> config.cmake
 if [[ ${CUDA} != "none" ]]; then
     echo set\(USE_CUDA ON\) >> config.cmake
     echo set\(USE_CUBLAS ON\) >> config.cmake
