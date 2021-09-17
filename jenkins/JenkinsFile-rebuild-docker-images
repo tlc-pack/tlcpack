@@ -35,9 +35,10 @@ def upload_to_docker_hub(image_type) {
   // 'docker/build.sh' makes some assumptions on the images produced.
   // The expected name is composed by ${BUILD_TAG}.${image_type}:${TVM_DOCKER_TAG}
 
-  sh """
+  sh '''
     docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_KEY}
-
+  '''
+  sh """
     docker tag \
       ${BUILD_TAG}.${image_type}:${TVM_DOCKER_TAG} \
       ${DOCKERHUB_USER}/${image_type}:${TVM_DOCKER_TAG}
@@ -314,14 +315,14 @@ pipeline {
         link: "https://hub.docker.com/u/tlcpackstaging/",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
-        webhookURL: "${DISCORD_WEBHOOK}"
+        webhookURL: '${DISCORD_WEBHOOK}'
     }
     unsuccessful {
       discordSend description: "Failed to generate Docker images using TVM hash `${TVM_CURRENT_SHORT_REF}`. See logs at ${BUILD_URL}.",
         link: "${BUILD_URL}",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
-        webhookURL: "${DISCORD_WEBHOOK}"
+        webhookURL: '${DISCORD_WEBHOOK}'
     }
     always {
       cleanWs();
