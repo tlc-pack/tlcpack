@@ -36,7 +36,7 @@ def retag_and_upload_to_docker_hub(image_type) {
   // retag it with validated tag and upload it to the same repository.
   //
   // Pulling the image is mandatory, and the subsequent push should
-  // happen very fast, as all the layers already exist in the 
+  // happen very fast, as all the layers already exist in the
   // remote Docker registry.
 
   sh '''
@@ -201,14 +201,14 @@ pipeline {
         link: "https://hub.docker.com/u/tlcpackstaging/",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
-        webhookURL: '${DISCORD_WEBHOOK}'
+        webhookURL: "${DISCORD_WEBHOOK}"
     }
     unsuccessful {
       discordSend description: "Failed to validate Docker images with tag `${DOCKER_TAG}`. See logs at ${BUILD_URL}.",
         link: "${BUILD_URL}",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
-        webhookURL: '${DISCORD_WEBHOOK}'
+        webhookURL: "${DISCORD_WEBHOOK}"
     }
     always {
       cleanWs();
