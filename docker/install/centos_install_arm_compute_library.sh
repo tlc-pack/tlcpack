@@ -3,14 +3,16 @@
 set -e
 set -x
 
-compute_lib_version="v21.05"
+compute_lib_version="v21.08"
+compute_lib_variant="arm64-v8a-neon"
+compute_lib_full_name="arm_compute-${compute_lib_version}-bin-linux-${compute_lib_variant}"
 compute_lib_base_url="https://github.com/ARM-software/ComputeLibrary/releases/download/${compute_lib_version}"
-compute_lib_file_name="arm_compute-${compute_lib_version}-bin-linux.tar.gz"
+compute_lib_file_name="${compute_lib_full_name}.tar.gz"
 compute_lib_download_url="${compute_lib_base_url}/${compute_lib_file_name}"
 
-target_lib="linux-arm64-v8a-neon"
+target_lib="${compute_lib_variant}"
 
-extract_dir="arm_compute-${compute_lib_version}-bin-linux"
+extract_dir="${compute_lib_full_name}"
 install_path="/opt/arm/acl"
 
 tmpdir=$(mktemp -d)
