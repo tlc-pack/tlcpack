@@ -19,6 +19,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DUSE_RANDOM=ON \
       -DUSE_GRAPH_RUNTIME_DEBUG=ON \
       -DUSE_LLVM="llvm-config --link-static" \
+      -DHIDE_PRIVATE_SYMBOLS=ON \
       -DUSE_METAL=ON \
       ..
 

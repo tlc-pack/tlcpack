@@ -36,6 +36,7 @@ cmake -DCMAKE_INSTALL_PREFIX="${PREFIX}" \
       -DUSE_RANDOM=ON \
       -DUSE_GRAPH_RUNTIME_DEBUG=ON \
       -DUSE_LLVM="llvm-config --link-static" \
+      -DHIDE_PRIVATE_SYMBOLS=ON \
       -DINSTALL_DEV=ON \
       ${GPU_OPT} ${TOOLCHAIN_OPT} \
       ${SRC_DIR}

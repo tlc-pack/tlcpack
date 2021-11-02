@@ -60,6 +60,7 @@ fi
 # config the cmake
 cd /workspace/tvm
 echo set\(USE_LLVM \"llvm-config --ignore-libllvm --link-static\"\) >> config.cmake
+echo set\(HIDE_PRIVATE_SYMBOLS ON\) >> config.cmake
 echo set\(USE_RPC ON\) >> config.cmake
 echo set\(USE_SORT ON\) >> config.cmake
 echo set\(USE_GRAPH_RUNTIME ON\) >> config.cmake
