@@ -10,7 +10,7 @@ import argparse
 # Tag used for stable build.
 # We need to use a tag after v0.7 to enable windows build
 # switch to a stable tag after v0.8
-__stable_build__ = "7b11b921720e0d79ba63182f2bce4b703824c7b7"
+__stable_build__ = "v0.7"
 # -----------------------------------------------------------
 
 def py_str(cstr):
