@@ -8,9 +8,7 @@ import argparse
 # Modify the following two settings during release
 # -----------------------------------------------------------
 # Tag used for stable build.
-# We need to use a tag after v0.7 to enable windows build
-# switch to a stable tag after v0.8
-__stable_build__ = "v0.7"
+__stable_build__ = "v0.8"
 # -----------------------------------------------------------
 
 def py_str(cstr):
