@@ -99,6 +99,9 @@ pipeline {
            description: 'Git revision to checkout.')
     string(name:"DOCKERHUB_USER", defaultValue: "tlcpackstaging",
            description: 'User that pushes images to Dockerhub.')
+    string(name:"TVM_GIT_REPO_URL",
+           defaultValue: "https://github.com/apache/tvm",
+           description: 'URL for the TVM repository')
   }
 
   stages {
@@ -110,6 +113,11 @@ pipeline {
           cleanWs();
           sh "git clone ${TVM_GIT_REPO_URL}"
           dir('tvm'){
+
+            // Checkout the requested reference, so that we
+            // can build images from branches/tags
+            sh "git checkout ${TVM_GIT_REV}"
+
             script{
               TVM_CURRENT_REF = sh (
                 script: 'git rev-parse HEAD',
