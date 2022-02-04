@@ -1,0 +1,185 @@
+#!groovy
+// -*- mode: groovy -*-
+
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+zephyr = 'zephyr'
+arduino = 'arduino'
+
+// Reference virtual machine current platform version
+TVM_ZEPHYR_PLATFORM_VERSION = '2.7'
+TVM_ARDUINO_PLATFORM_VERSION = '0.18'
+
+// Reference virtual machine current version
+TVM_ZEPHYR_RVM_SUB_VERSION = '0.1'
+TVM_ARDUINO_RVM_SUB_VERSION = '0.3'
+
+// Global variable to store the Vagrant image tag
+// by this build.
+TVM_RVM_TAG = ''
+
+def per_exec_ws(folder) {
+  return "workspace/exec_${env.EXECUTOR_NUMBER}/" + folder
+}
+
+def rvm_build(platform) {
+  sh """
+    apps/microtvm/reference-vm/scripts/reference_vm_build.sh ${platform}
+  """
+}
+
+def rvm_upload(platform) {
+  sh """
+    vagrant cloud auth login -u ${VAGRANTHUB_USER} -t ${VAGRANTHUB_TOKEN}
+  """
+
+  if (platform == 'zephyr') {
+    box_version = "${TVM_ZEPHYR_RVM_SUB_VERSION}"
+    platform_version = "${TVM_ZEPHYR_PLATFORM_VERSION}"
+  } else if (platform == 'arduino') {
+    box_version = "${TVM_ARDUINO_RVM_SUB_VERSION}"
+    platform_version = "${TVM_ARDUINO_PLATFORM_VERSION}"
+  } else {
+    box_version = ''
+  }
+
+  sh """
+    apps/microtvm/reference-vm/scripts/reference_vm_release.sh ${platform} tlcpackstaging/microtvm-${platform}-${platform_version} ${box_version}.${TVM_RVM_TAG}
+  """
+}
+
+def rvm_test(platform) {
+  if (platform == 'zephyr') {
+    board = 'qemu_x86'
+  } else {
+    return
+  }
+
+  sh """
+    apps/microtvm/reference-vm/scripts/reference_vm_test.sh ${platform} ${board}
+  """
+}
+
+def init_git() {
+  // Add more info about job node
+  sh """
+     echo "INFO: NODE_NAME=${NODE_NAME} EXECUTOR_NUMBER=${EXECUTOR_NUMBER}"
+     """
+
+  sh "git clone ${TVM_GIT_REPO_URL}"
+
+  dir('tvm') {
+    script {
+      // At the beginning of a build, the $TVM_CURRENT_REF is set
+      // so that all images are generated using strictly the same
+      // TVM git revision.
+      sh "git checkout ${TVM_CURRENT_REF}"
+      sh "git submodule update --init -f"
+    }
+  } // dir
+}
+
+pipeline {
+  agent { node { label 'CPU-MICROTVM' } }
+
+  environment {
+    VAGRANTHUB_TOKEN = credentials('vagranthub-tlcpackstaging-token')
+  }
+
+  parameters {
+    string(name:'TVM_GIT_REV',
+           defaultValue: 'rvm_build_scripts',
+           description: 'Git revision to checkout.')
+    string(name:'VAGRANTHUB_USER', defaultValue: 'tlcpackstaging',
+           description: 'User that pushes images to Vagrant Hub.')
+    string(name:'TVM_GIT_REPO_URL',
+           defaultValue: 'https://github.com/apache/tvm',
+           description: 'URL for the TVM repository')
+  }
+
+  stages {
+    stage('Prepare') {
+      agent { node { label 'CPU-MICROTVM' } }
+      steps {
+        ws(per_exec_ws('tvm/rvm-prepare')) {
+          cleanWs()
+          sh "git clone ${TVM_GIT_REPO_URL}"
+          dir('tvm') {
+            // Checkout the requested reference, so that we
+            // can build images from branches/tags
+            sh "git checkout ${TVM_GIT_REV}"
+
+            script {
+              TVM_CURRENT_REF = sh (
+                script: 'git rev-parse HEAD',
+                returnStdout: true
+              ).trim()
+
+              TIMESTAMP_TAG = sh (
+                script: 'date "+%Y%m%d%H%M%S"',
+                returnStdout: true
+              ).trim()
+
+              TVM_CURRENT_SHORT_REF = sh (
+                script: 'git rev-parse --short HEAD',
+                returnStdout: true
+              ).trim()
+
+              currentBuild.displayName = "${TVM_CURRENT_SHORT_REF}"
+              TVM_RVM_TAG = "${TIMESTAMP_TAG}"
+            }
+          }
+        }
+      } // steps
+      post {
+        always {
+          cleanWs()
+        }
+      } // post
+    } // stage: Prepare
+
+    stage('Build') {
+      parallel {
+        stage('ci-zephyr') {
+          agent { node { label 'CPU-MICROTVM' } }
+          steps {
+            ws(per_exec_ws('tvm/rvm-ci-zephyr')) {
+              cleanWs()
+              init_git()
+              dir('tvm') {
+                rvm_build(zephyr)
+                rvm_upload(zephyr)
+                rvm_test(zephyr)
+              }
+            }
+          } // steps
+          post {
+            always {
+              cleanWs()
+            }
+          } // post
+        } // stage
+      } // parallel
+    } // stage: Build
+  } // stages
+  post {
+    always {
+      cleanWs()
+    }
+} // post
+} // pipeline
