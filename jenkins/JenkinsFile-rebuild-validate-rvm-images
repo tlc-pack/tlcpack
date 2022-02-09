@@ -64,12 +64,11 @@ def rvm_upload(platform) {
 }
 
 def rvm_test(platform) {
-  if (platform == 'zephyr') {
-    board = 'qemu_x86'
-  } else {
+  if (platform != 'zephyr') {
     return
   }
 
+  board = 'qemu_x86'
   sh """
     apps/microtvm/reference-vm/scripts/reference_vm_test.sh ${platform} ${board}
   """
@@ -89,7 +88,7 @@ def init_git() {
       // so that all images are generated using strictly the same
       // TVM git revision.
       sh "git checkout ${TVM_CURRENT_REF}"
-      sh "git submodule update --init -f"
+      sh 'git submodule update --init -f'
     }
   } // dir
 }
