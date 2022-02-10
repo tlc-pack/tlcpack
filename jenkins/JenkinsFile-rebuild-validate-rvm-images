@@ -25,10 +25,6 @@ arduino = 'arduino'
 TVM_ZEPHYR_PLATFORM_VERSION = '2.7'
 TVM_ARDUINO_PLATFORM_VERSION = '0.18'
 
-// Reference virtual machine current version
-TVM_ZEPHYR_RVM_SUB_VERSION = '0.1'
-TVM_ARDUINO_RVM_SUB_VERSION = '0.3'
-
 // Global variable to store the Vagrant image tag
 // by this build.
 TVM_RVM_TAG = ''
@@ -49,17 +45,15 @@ def rvm_upload(platform) {
   """
 
   if (platform == 'zephyr') {
-    box_version = "${TVM_ZEPHYR_RVM_SUB_VERSION}"
     platform_version = "${TVM_ZEPHYR_PLATFORM_VERSION}"
   } else if (platform == 'arduino') {
-    box_version = "${TVM_ARDUINO_RVM_SUB_VERSION}"
     platform_version = "${TVM_ARDUINO_PLATFORM_VERSION}"
   } else {
-    box_version = ''
+    platform_version = ''
   }
 
   sh """
-    apps/microtvm/reference-vm/scripts/reference_vm_release.sh ${platform} tlcpackstaging/microtvm-${platform}-${platform_version} ${box_version}.${TVM_RVM_TAG}
+    apps/microtvm/reference-vm/scripts/reference_vm_release.sh ${platform} tlcpackstaging/microtvm-${platform}-${platform_version} 0.0.${TVM_RVM_TAG}
   """
 }
 
