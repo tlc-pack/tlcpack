@@ -20,6 +20,30 @@ function in_array() {
     return 1
 }
 
+function build_tlcpack_wheel() {
+    python_version=$1
+
+    CPYTHON_PATH="$(cpython_path ${python_version} ${UNICODE_WIDTH})"
+    PYTHON_BIN="${CPYTHON_PATH}/bin/python"
+    PIP_BIN="${CPYTHON_PATH}/bin/pip"
+
+    cd "${TVM_PYTHON_DIR}" && \
+      PATH="${CPYTHON_PATH}/bin:$PATH" ${PYTHON_BIN} setup.py bdist_wheel
+}
+
+function audit_tlcpack_wheel() {
+    python_version=$1
+
+    # Remove the . in version string, e.g. "3.8" turns into "38"
+    python_version_str="$(echo "${python_version}" | sed -r 's/\.//g')"
+
+    cd "${TVM_PYTHON_DIR}" && \
+      mkdir -p repared_wheel && \
+      auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp${python_version_str}*.whl
+}
+
+TVM_PYTHON_DIR="/workspace/tvm/python"
+PYTHON_VERSIONS=("3.6" "3.7" "3.8")
 CUDA_OPTIONS=("none" "10.0" "10.1" "10.2")
 CUDA="none"
 
@@ -57,6 +81,11 @@ else
     echo "Building TVM with CUDA ${CUDA}"
 fi
 
+AUDITWHEEL_OPTS="--plat ${AUDITWHEEL_PLAT} -w repaired_wheels/"
+if [[ ${CUDA} != "none" ]]; then
+    AUDITWHEEL_OPTS="--skip-libs libcuda ${AUDITWHEEL_OPTS}"
+fi
+
 # config the cmake
 cd /workspace/tvm
 echo set\(USE_LLVM \"llvm-config --ignore-libllvm --link-static\"\) >> config.cmake
@@ -83,31 +112,22 @@ cmake ..
 make -j$(nproc)
 
 UNICODE_WIDTH=32  # Dummy value, irrelevant for Python 3
-CPYTHON36_PATH="$(cpython_path 3.6 ${UNICODE_WIDTH})"
-CPYTHON37_PATH="$(cpython_path 3.7 ${UNICODE_WIDTH})"
-CPYTHON38_PATH="$(cpython_path 3.8 ${UNICODE_WIDTH})"
-PYTHON36="${CPYTHON36_PATH}/bin/python"
-PYTHON37="${CPYTHON37_PATH}/bin/python"
-PYTHON38="${CPYTHON38_PATH}/bin/python"
-PIP36="${CPYTHON36_PATH}/bin/pip"
-PIP37="${CPYTHON37_PATH}/bin/pip"
-PIP38="${CPYTHON38_PATH}/bin/pip"
 
-# build the python wheel
-cd /workspace/tvm/python
-PATH="${CPYTHON36_PATH}/bin:$PATH" ${PYTHON36} setup.py bdist_wheel
-PATH="${CPYTHON37_PATH}/bin:$PATH" ${PYTHON37} setup.py bdist_wheel
-PATH="${CPYTHON38_PATH}/bin:$PATH" ${PYTHON38} setup.py bdist_wheel
+# Not all manylinux Docker images will have all Python versions,
+# so check the existing python versions before generating packages
+for python_version in ${PYTHON_VERSIONS[*]}
+do
+    echo "> Looking for Python ${python_version}."
+    cpython_dir="$(cpython_path ${python_version} ${UNICODE_WIDTH} 2> /dev/null)"
+    if [ -d "${cpython_dir}" ]; then
+      echo "Generating package for Python ${python_version}."
+      build_tlcpack_wheel ${python_version}
 
-AUDITWHEEL_OPTS="--plat ${AUDITWHEEL_PLAT} -w repaired_wheels/"
-if [[ ${CUDA} != "none" ]]; then
-    AUDITWHEEL_OPTS="--skip-libs libcuda ${AUDITWHEEL_OPTS}"
-fi
+      echo "Running auditwheel on package for Python ${python_version}."
+      audit_tlcpack_wheel ${python_version}
+    else
+      echo "Python ${python_version} not found. Skipping.";
+    fi
 
-# repair python wheels
-# skip libcuda
-mkdir -p repared_wheels
-auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp36*.whl
-auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp37*.whl
-auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp38*.whl
-# skip tests since cuda might require the cuda runtime to be avaialble.
+done
+
