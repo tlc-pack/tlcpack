@@ -1,6 +1,6 @@
 # Docker image: tlcpack/package-cpu
 
-FROM quay.io/pypa/manylinux2014_x86_64:2021-04-27-6967be9
+FROM quay.io/pypa/manylinux2014_x86_64:2022-02-13-594988e
 
 # install core
 COPY install/centos_install_core.sh /install/centos_install_core.sh
