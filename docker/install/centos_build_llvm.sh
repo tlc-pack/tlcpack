@@ -37,7 +37,7 @@ cmake \
     -DLLVM_ENABLE_OCAMLDOC=OFF \
     -DLLVM_USE_INTEL_JITEVENTS=ON \
     -DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=ON \
-    -DPYTHON_EXECUTABLE="$(cpython_path 3.6)/bin/python" \
+    -DPYTHON_EXECUTABLE="$(cpython_path 3.7)/bin/python" \
     -GNinja \
     ..
 ninja install
