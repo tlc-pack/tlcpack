@@ -3,7 +3,7 @@
 set -e
 
 source /multibuild/manylinux_utils.sh
-python3_bin="$(cpython_path 3.6)/bin/python"
+python3_bin="$(cpython_path 3.7)/bin/python"
 
 repo_url="https://github.com/Arm-software/ethos-n-driver-stack"
 repo_dir="ethosn-driver"
