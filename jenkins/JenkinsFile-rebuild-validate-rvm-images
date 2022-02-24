@@ -96,7 +96,7 @@ pipeline {
 
   parameters {
     string(name:'TVM_GIT_REV',
-           defaultValue: 'rvm_build_scripts',
+           defaultValue: 'main',
            description: 'Git revision to checkout.')
     string(name:'VAGRANTHUB_USER', defaultValue: 'tlcpackstaging',
            description: 'User that pushes images to Vagrant Hub.')
