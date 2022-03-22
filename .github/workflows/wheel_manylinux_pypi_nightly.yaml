@@ -1,0 +1,52 @@
+# GH actions.
+name: Wheel-Manylinux-Pypi
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 5 * * *' # 5 AM UTC
+
+jobs:
+  Build:
+    strategy:
+      matrix:
+        pkg: ['pypi-nightly']
+        # matrix of build configs
+        config:
+          - cuda: 'none'
+            image: 'tlcpack/package-cpu:v0.4'
+            package_name: 'apache-tvm'
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: TVM checkout
+      run: |
+        git clone https://github.com/apache/tvm tvm --recursive
+    - name: Sync Package
+      run: |
+        python common/sync_package.py \
+          --cuda ${{ matrix.config.cuda }} \
+          --package-name ${{ matrix.config.package_name }} \
+          ${{ matrix.pkg }}
+    - name: Build
+      env:
+        IMAGE: ${{ matrix.config.image }}
+        CUDA: ${{ matrix.config.cuda }}
+      run: |
+        docker/bash.sh --no-gpu $IMAGE ./wheel/build_wheel_manylinux.sh --cuda $CUDA
+    - name: Wheel-Deploy-Pypi
+      env:
+        TWINE_NON_INTERACTIVE: '1'
+        TWINE_REPOSITORY: 'pypi'
+        TWINE_USERNAME: 'tvm'
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_KEY }}
+      run: |
+        python3 -m pip install twine
+        twine upload tvm/python/repaired_wheels

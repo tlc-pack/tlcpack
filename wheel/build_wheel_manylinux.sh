@@ -39,7 +39,7 @@ function audit_tlcpack_wheel() {
 
     cd "${TVM_PYTHON_DIR}" && \
       mkdir -p repared_wheel && \
-      auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp${python_version_str}*.whl
+      auditwheel repair ${AUDITWHEEL_OPTS} dist/*cp${python_version_str}*.whl
 }
 
 TVM_PYTHON_DIR="/workspace/tvm/python"
