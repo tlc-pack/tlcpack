@@ -39,11 +39,12 @@ function audit_tlcpack_wheel() {
 
     cd "${TVM_PYTHON_DIR}" && \
       mkdir -p repared_wheel && \
-      auditwheel repair ${AUDITWHEEL_OPTS} dist/tlcpack*cp${python_version_str}*.whl
+      auditwheel repair ${AUDITWHEEL_OPTS} dist/*cp${python_version_str}*.whl
 }
 
 TVM_PYTHON_DIR="/workspace/tvm/python"
-PYTHON_VERSIONS=("3.6" "3.7" "3.8")
+PYTHON_VERSIONS_CPU=("3.6" "3.7" "3.8" "3.9" "3.10")
+PYTHON_VERSIONS_GPU=("3.6" "3.7" "3.8")
 CUDA_OPTIONS=("none" "10.0" "10.1" "10.2")
 CUDA="none"
 
@@ -77,8 +78,10 @@ fi
 
 if [[ ${CUDA} == "none" ]]; then
     echo "Building TVM for CPU only"
+    PYTHON_VERSIONS=${PYTHON_VERSIONS_CPU[*]}
 else
     echo "Building TVM with CUDA ${CUDA}"
+    PYTHON_VERSIONS=${PYTHON_VERSIONS_GPU[*]}
 fi
 
 AUDITWHEEL_OPTS="--plat ${AUDITWHEEL_PLAT} -w repaired_wheels/"
