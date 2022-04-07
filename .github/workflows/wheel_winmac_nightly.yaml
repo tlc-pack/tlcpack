@@ -15,7 +15,7 @@ jobs:
   Build:
     strategy:
       matrix:
-        os: [macOS-latest, windows-2016]
+        os: [macOS-latest, windows-2019]
         pkg: ['tlcpack', 'tlcpack-nightly']
 
     runs-on: ${{ matrix.os }}
