@@ -44,7 +44,7 @@ jobs:
       run: |
         git clone https://github.com/apache/tvm tvm --recursive
     - name: Sync Package
-      run: python common/sync_package.py ${{ matrix.pkg }}
+      run: python3 common/sync_package.py ${{ matrix.pkg }}
     - name: Build@MacOS
       if: startsWith(matrix.os, 'macOS')
       shell: bash -l {0}
@@ -92,5 +92,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
       run: |
-        python -m pip install github3.py
-        python wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/dist
+        python3 -m pip install github3.py
+        python3 wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/dist
