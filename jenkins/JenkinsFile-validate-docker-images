@@ -119,7 +119,7 @@ pipeline {
               [$class: 'StringParameterValue', name: 'ci_wasm_param', value: "${DOCKERHUB_USER}/ci_wasm:${DOCKER_TAG}"],
               [$class: 'StringParameterValue', name: 'ci_i386_param', value: "${DOCKERHUB_USER}/ci_i386:${DOCKER_TAG}"],
               [$class: 'StringParameterValue', name: 'ci_qemu_param', value: "${DOCKERHUB_USER}/ci_qemu:${DOCKER_TAG}"],
-              [$class: 'StringParameterValue', name: 'ci_arm_param', value: "${DOCKERHUB_USER}/ci_arm:${DOCKER_TAG}"]
+              [$class: 'StringParameterValue', name: 'ci_arm_param', value: "${DOCKERHUB_USER}/ci_arm:${DOCKER_TAG}"],
               [$class: 'StringParameterValue', name: 'ci_hexagon_param', value: "${DOCKERHUB_USER}/ci_hexagon:${DOCKER_TAG}"]
             ]
         }
