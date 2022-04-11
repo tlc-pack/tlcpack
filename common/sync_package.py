@@ -85,18 +85,29 @@ def get_version_tag():
 
 
 def update_libinfo(args):
-    _ , local_ver = get_version_tag()
+    pub_ver, local_ver = get_version_tag()
+
+    # Set the version to be compliant with what is accepted for
+    # PyPI. A valid version string looks like "0.8.dev1473"
+    package_ver = pub_ver if args.use_public_version else local_ver
 
     update(
         os.path.join(args.src, "python", "tvm", "_ffi", "libinfo.py"),
-        [("(?<=__version__ = \")[^\"]+", local_ver)],
+        [("(?<=__version__ = \")[^\"]+", package_ver)],
         args.dry_run
     )
 
 
 def update_setup(args, package_name):
+    pub_ver, local_ver = get_version_tag()
+
+    # Set the version to be compliant with what is accepted for
+    # PyPI. A valid version string looks like "0.8.dev1473"
+    package_ver = pub_ver if args.use_public_version else local_ver
+
     rewrites = [
         (r'(?<=name=")[^\"]+', name_with_cuda(args, package_name)),
+        (r'(?<=version=)[^\,]+', f'"{package_ver}"'),
         (r'(?<=description=")[^\"]+',
          "Tensor learning compiler binary distribution"),
         (r'(?<=url=")[^\"]+', "https://tlcpack.ai")
@@ -153,6 +164,9 @@ def main():
                         default="",
                         help="Name of the produced Python packages. Optional. "
                              "Defaults to the provided build_type.")
+    parser.add_argument("--use-public-version",
+                        action="store_true",
+                        help="Set version number according to PEP-440, required for PyPI publication.")
     parser.add_argument("build_type",
                         type=str,
                         help="Type of package to be built. Use 'tlcpack' to build the last stable "
