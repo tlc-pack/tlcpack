@@ -29,7 +29,6 @@ RUN bash /install/centos_install_arm_compute_library.sh
 
 # install python packages
 COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
-RUN bash /install/centos_install_python_package.sh 3.6
 RUN bash /install/centos_install_python_package.sh 3.7
 RUN bash /install/centos_install_python_package.sh 3.8
 

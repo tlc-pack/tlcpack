@@ -58,16 +58,6 @@ jobs:
     # Build wheel for three python versions
     - uses: actions/setup-python@v2
       with:
-        python-version: 3.6
-    - name: Wheel-Build@Py36
-      env:
-        MACOSX_DEPLOYMENT_TARGET: 10.14
-      run: |
-        python -m pip install setuptools Cython wheel
-        cd tvm/python
-        python setup.py bdist_wheel
-    - uses: actions/setup-python@v2
-      with:
         python-version: 3.7
     - name: Wheel-Build@Py37
       env:
