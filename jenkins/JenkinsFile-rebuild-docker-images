@@ -82,7 +82,7 @@ def init_git() {
 
 
 pipeline {
-  agent { node { label 'CPU-DOCKER' } }
+  agent { node { label 'CPU' } }
 
 //  options {
       //timestamps()
@@ -107,7 +107,7 @@ pipeline {
   stages {
 
     stage('Prepare') {
-      agent { node { label 'CPU-DOCKER' } }
+      agent { node { label 'CPU' } }
       steps {
         ws(per_exec_ws("tvm/docker-prepare")) {
           cleanWs();
@@ -152,7 +152,7 @@ pipeline {
       parallel {
 
         stage('ci-cpu') {
-          agent { node { label 'CPU-DOCKER' } }
+          agent { node { label 'CPU' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-cpu")) {
               cleanWs();
@@ -174,7 +174,7 @@ pipeline {
         } // stage
 
         stage('ci-gpu') {
-          agent { node { label 'GPU-DOCKER' } }
+          agent { node { label 'GPU' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-gpu")) {
               cleanWs();
@@ -196,7 +196,7 @@ pipeline {
         } // stage
 
         stage('ci-lint') {
-          agent { node { label 'CPU-DOCKER' } }
+          agent { node { label 'CPU' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-lint")) {
               cleanWs();

@@ -66,7 +66,7 @@ def cleanup_docker_image(image_type) {
 
 
 pipeline {
-  agent { node { label 'CPU-DOCKER' } }
+  agent { node { label 'CPU' } }
 
   environment {
       DOCKERHUB_USER = "tlcpackstaging"
@@ -135,7 +135,7 @@ pipeline {
       parallel {
 
         stage('cpu') {
-          agent { node { label 'CPU-DOCKER' } }
+          agent { node { label 'CPU' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-cpu")) {
               cleanWs();
@@ -162,7 +162,7 @@ pipeline {
         } // stage
 
         stage('gpu') {
-          agent { node { label 'GPU-DOCKER' } }
+          agent { node { label 'GPU' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-gpu")) {
               cleanWs();
