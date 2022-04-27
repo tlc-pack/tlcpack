@@ -39,7 +39,7 @@ def retag_and_upload_to_docker_hub(image_type) {
   // happen very fast, as all the layers already exist in the
   // remote Docker registry.
 
-  sh '''
+  sh """
     docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_KEY}
 
     docker pull ${DOCKERHUB_USER}/${image_type}:${DOCKER_TAG}
@@ -49,7 +49,7 @@ def retag_and_upload_to_docker_hub(image_type) {
       ${DOCKERHUB_USER}/${image_type}:${DOCKER_VALIDATED_TAG}
 
     docker push ${DOCKERHUB_USER}/${image_type}:${DOCKER_VALIDATED_TAG}
- '''
+  """
 
 }
 
