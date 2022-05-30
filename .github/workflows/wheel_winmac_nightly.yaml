@@ -61,7 +61,7 @@ jobs:
         python-version: 3.7
     - name: Wheel-Build@Py37
       env:
-        MACOSX_DEPLOYMENT_TARGET: 10.14
+        MACOSX_DEPLOYMENT_TARGET: 10.15
       run: |
         python -m pip install setuptools Cython wheel
         cd tvm/python
@@ -71,7 +71,7 @@ jobs:
         python-version: 3.8
     - name: Wheel-Build@Py38
       env:
-        MACOSX_DEPLOYMENT_TARGET: 10.14
+        MACOSX_DEPLOYMENT_TARGET: 10.15
       run: |
         python -m pip install setuptools Cython wheel
         cd tvm/python
