@@ -156,6 +156,25 @@ pipeline {
           } // post
         } // stage
       } // parallel
+      stage('ci-arduino') {
+          agent { node { label 'CPU-MICROTVM' } }
+          steps {
+            ws(per_exec_ws('tvm/rvm-ci-arduino')) {
+              cleanWs()
+              init_git()
+              dir('tvm') {
+                rvm_build(arduino)
+                rvm_upload(arduino)
+              }
+            }
+          } // steps
+          post {
+            always {
+              cleanWs()
+            }
+          } // post
+        } // stage
+      } // parallel
     } // stage: Build
   } // stages
   post {
