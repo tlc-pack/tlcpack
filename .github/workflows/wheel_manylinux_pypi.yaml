@@ -20,7 +20,7 @@ jobs:
         # matrix of build configs
         config:
           - cuda: 'none'
-            image: 'tlcpack/package-cpu:v0.4'
+            image: 'tlcpack/package-cpu:v0.5'
             package_name: 'apache-tvm'
 
     runs-on: ubuntu-latest
@@ -43,6 +43,14 @@ jobs:
         CUDA: ${{ matrix.config.cuda }}
       run: |
         docker/bash.sh --no-gpu $IMAGE ./wheel/build_wheel_manylinux.sh --cuda $CUDA
+    - name: Test
+      if: matrix.config.cuda == 'none'
+      env:
+        IMAGE: ${{ matrix.config.image }}
+        WHEEL_TEST: "True"
+      continue-on-error: true
+      run: |
+        docker/bash.sh --no-gpu $IMAGE ./wheel/run_tests.sh
     - name: Wheel-Deploy-Pypi
       if: github.ref == 'refs/heads/main'
       env:
