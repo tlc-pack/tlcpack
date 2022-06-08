@@ -155,8 +155,7 @@ pipeline {
             }
           } // post
         } // stage
-      } // parallel
-      stage('ci-arduino') {
+        stage('ci-arduino') {
           agent { node { label 'CPU-MICROTVM' } }
           steps {
             ws(per_exec_ws('tvm/rvm-ci-arduino')) {
