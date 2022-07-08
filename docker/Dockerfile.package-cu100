@@ -27,6 +27,11 @@ RUN bash /install/centos_install_arm_ethosn_driver_stack.sh
 COPY install/centos_install_arm_compute_library.sh /install/centos_install_arm_compute_library.sh
 RUN bash /install/centos_install_arm_compute_library.sh
 
+# Install Conda
+COPY install/centos_install_conda.sh /install/centos_install_conda.sh
+RUN bash /install/centos_install_conda.sh
+ENV PATH=/opt/conda/bin:${PATH}
+
 # install python packages
 COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
 RUN bash /install/centos_install_python_package.sh 3.7
@@ -35,11 +40,8 @@ RUN bash /install/centos_install_python_package.sh 3.8
 COPY install/centos_install_auditwheel.sh /install/centos_install_auditwheel.sh
 RUN bash /install/centos_install_auditwheel.sh
 
-COPY install/centos_install_conda.sh /install/centos_install_conda.sh
-RUN bash /install/centos_install_conda.sh
-
 # Environment variables
-ENV PATH=/usr/local/cuda/bin:/opt/conda/bin:${PATH}
+ENV PATH=/usr/local/cuda/bin:${PATH}
 ENV CPLUS_INCLUDE_PATH=/usr/local/cuda/include:${CPLUS_INCLUDE_PATH}
 ENV C_INCLUDE_PATH=/usr/local/cuda/include:${C_INCLUDE_PATH}
 ENV LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/compact:${LIBRARY_PATH}

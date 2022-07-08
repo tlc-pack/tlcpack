@@ -48,6 +48,11 @@ else
     CUDA_ENV=""
 fi
 
+# If this is an wheel test command then pass the env var to docker.
+if [[ ! -z $WHEEL_TEST ]]; then
+    WHEEL_TEST="-e WHEEL_TEST=${WHEEL_TEST}"
+fi
+
 if [[ "${DOCKER_IMAGE_NAME}" == *"cu"* ]]; then
     if [ "$ENABLE_NV_DOCKER" -eq 1 ]; then
         if ! type "nvidia-docker" 1> /dev/null 2> /dev/null
@@ -80,6 +85,7 @@ ${DOCKER_BINARY} run --rm --pid=host\
     -v ${SCRIPT_DIR}:/docker \
     -w /workspace \
     ${CUDA_ENV} \
+    ${WHEEL_TEST} \
     ${DOCKER_EXTRA_PARAMS[@]} \
     ${DOCKER_IMAGE_NAME} \
     ${COMMAND[@]}
