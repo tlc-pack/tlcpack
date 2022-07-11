@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - main
+      - release/*
   pull_request:
     branches:
       - main
+  workflow_dispatch:
   schedule:
     - cron: '0 6 * * *' # 6 AM UTC
 
@@ -15,11 +17,13 @@ jobs:
   Build:
     strategy:
       matrix:
-        os: [macOS-latest, windows-2019]
-        pkg: ['tlcpack', 'tlcpack-nightly']
-
+        os:
+          - macOS-latest
+          - windows-2019
+        pkg:
+          - tlcpack
+          - tlcpack-nightly
     runs-on: ${{ matrix.os }}
-
     steps:
     - uses: actions/checkout@v2
     - uses: actions/cache@v1
@@ -50,11 +54,13 @@ jobs:
       shell: bash -l {0}
       run: >-
         wheel/build_lib_osx.sh
+
     - name: Build@Win
       if: startsWith(matrix.os, 'windows')
       shell: cmd /C call {0}
       run: >-
         wheel/build_lib_win.bat
+
     # Build wheel for three python versions
     - uses: actions/setup-python@v2
       with:
@@ -66,6 +72,7 @@ jobs:
         python -m pip install setuptools Cython wheel
         cd tvm/python
         python setup.py bdist_wheel
+
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
@@ -76,6 +83,29 @@ jobs:
         python -m pip install setuptools Cython wheel
         cd tvm/python
         python setup.py bdist_wheel
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Wheel-Build@Py39
+      env:
+        MACOSX_DEPLOYMENT_TARGET: 10.15
+      run: |
+        python -m pip install setuptools Cython wheel
+        cd tvm/python
+        python setup.py bdist_wheel
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.10
+    - name: Wheel-Build@Py310
+      env:
+        MACOSX_DEPLOYMENT_TARGET: 10.15
+      run: |
+        python -m pip install setuptools Cython wheel
+        cd tvm/python
+        python setup.py bdist_wheel
+
     # Use system python instead of conda for upload
     - name: Wheel-Deploy
       if: github.ref == 'refs/heads/main'
