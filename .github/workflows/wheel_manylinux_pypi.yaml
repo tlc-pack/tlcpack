@@ -16,14 +16,18 @@ jobs:
   Build:
     strategy:
       matrix:
-        pkg: ['pypi-nightly']
+        pkg:
+          - pypi-nightly
         # matrix of build configs
         config:
           - cuda: 'none'
             image: 'tlcpack/package-cpu:v0.5'
             package_name: 'apache-tvm'
-
-    runs-on: ubuntu-latest
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
