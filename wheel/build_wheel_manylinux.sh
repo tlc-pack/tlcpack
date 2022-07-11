@@ -44,7 +44,7 @@ function audit_tlcpack_wheel() {
 
 TVM_PYTHON_DIR="/workspace/tvm/python"
 PYTHON_VERSIONS_CPU=("3.7" "3.8" "3.9" "3.10")
-PYTHON_VERSIONS_GPU=("3.7" "3.8")
+PYTHON_VERSIONS_GPU=("3.7" "3.8", "3.9", "3.10")
 CUDA_OPTIONS=("none" "10.2" "11.0" "11.1" "11.3")
 CUDA="none"
 
@@ -69,12 +69,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if ! in_array "${CUDA}" "${CUDA_OPTIONS[*]}" ; then
-    echo "Invalid CUDA option: ${CUDA}"
-    echo
-    echo 'CUDA can only be {"none", "10.0", "10.1", "10.2"}'
-    exit -1
-fi
+# if ! in_array "${CUDA}" "${CUDA_OPTIONS[*]}" ; then
+#     echo "Invalid CUDA option: ${CUDA}"
+#     echo
+#     echo 'CUDA can only be {"none", "10.0", "10.1", "10.2"}'
+#     exit -1
+# fi
 
 if [[ ${CUDA} == "none" ]]; then
     echo "Building TVM for CPU only"
@@ -100,6 +100,7 @@ echo set\(USE_ETHOSN /opt/arm/ethosn-driver\) >> config.cmake
 echo set\(USE_ARM_COMPUTE_LIB /opt/arm/acl\) >> config.cmake
 echo set\(USE_MICRO ON\) >> config.cmake
 echo set\(USE_MICRO_STANDALONE_RUNTIME ON\) >> config.cmake
+echo set\(SUMMARIZE ON\) >> config.cmake
 echo set\(USE_ETHOSU ON\) >> config.cmake
 echo set\(USE_CMSISNN ON\) >> config.cmake
 if [[ ${CUDA} != "none" ]]; then
