@@ -1,7 +1,6 @@
 #!/bin/bash
 
-set -e
-set -u
+set -eux
 
 cd tvm
 rm -f config.cmake
@@ -23,6 +22,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DUSE_ETHOSU=ON \
       -DUSE_CMSISNN=ON \
       -DUSE_MICRO=ON \
+      -DSUMMARIZE=ON \
       -DUSE_MICRO_STANDALONE_RUNTIME=ON \
       -DUSE_METAL=ON \
       ..
