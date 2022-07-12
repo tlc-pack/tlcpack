@@ -6,7 +6,7 @@
 # Usage: build_image.sh <CONTAINER_TYPE>
 #
 # CONTAINER_NAME: Type of the docker container used to build wheels, e.g.,
-#                 (cpu|cu100|cu101|cu102)
+#                 (cpu|cu102|cu110|cu111|cu113)
 #
 # The built image will show as tlpack/package-[type]:staging
 #
