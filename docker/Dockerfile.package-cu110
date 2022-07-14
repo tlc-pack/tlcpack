@@ -1,6 +1,6 @@
-# Docker image: tlcpack/package-cu101
+# Docker image: tlcpack/package-cu110
 
-FROM pytorch/manylinux-cuda101
+FROM pytorch/manylinux-cuda110
 
 # install core
 COPY install/centos_install_core.sh /install/centos_install_core.sh

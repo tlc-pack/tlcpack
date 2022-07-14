@@ -43,10 +43,10 @@ will point to a stable build hashtag defined in common/sync_package.py
 ./docker/bash.sh [docker-image] ./wheel/build_wheel_manylinux.sh --cuda none
 ```
 
-To build wheels for a specific CUDA version, for example, CUDA 10.1, run
+To build wheels for a specific CUDA version, for example, CUDA 11.1, run
 
 ```bash
-./docker/bash.sh [docker-image] ./wheel/build_wheel_manylinux.sh --cuda 10.1
+./docker/bash.sh [docker-image] ./wheel/build_wheel_manylinux.sh --cuda 11.1
 ```
 
 The docker image is built in step 1 and needs to match the cuda version.
