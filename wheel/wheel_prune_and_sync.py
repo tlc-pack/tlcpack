@@ -109,12 +109,13 @@ def list_wheels(repo):
 
 def update_wheel_page(keep_list, site_repo, dry_run=False):
     """Update the wheel page"""
-    new_html = ""
+    new_html = '<!DOCTYPE html>\n<html>\n<body>\n'
     for asset in keep_list:
         new_html += '<a href="%s">%s</a><br>\n' % (
             asset.browser_download_url,
             asset.name,
         )
+    new_html += '</body>\n</html>'
 
     def run_cmd(cmd):
         proc = subprocess.Popen(
