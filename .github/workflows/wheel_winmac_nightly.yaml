@@ -17,12 +17,9 @@ jobs:
   Build:
     strategy:
       matrix:
-        os:
-          - macOS-latest
-          - windows-2019
-        pkg:
-          - tlcpack
-          - tlcpack-nightly
+        os: [macOS-latest]
+#        pkg: ['tlcpack', 'tlcpack-nightly']
+
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -48,7 +45,11 @@ jobs:
       run: |
         git clone https://github.com/apache/tvm tvm --recursive
     - name: Sync Package
-      run: python3 common/sync_package.py ${{ matrix.pkg }}
+      env:
+        TAG: pypi
+      run: |
+        set -eux
+        python3 common/sync_package.py "$TAG"
     - name: Build@MacOS
       if: startsWith(matrix.os, 'macOS')
       shell: bash -l {0}
@@ -94,7 +95,6 @@ jobs:
         python -m pip install setuptools Cython wheel
         cd tvm/python
         python setup.py bdist_wheel
-
     - uses: actions/setup-python@v2
       with:
         python-version: 3.10
@@ -105,12 +105,12 @@ jobs:
         python -m pip install setuptools Cython wheel
         cd tvm/python
         python setup.py bdist_wheel
-
     # Use system python instead of conda for upload
     - name: Wheel-Deploy
-      if: github.ref == 'refs/heads/main'
+#      if: github.ref == 'refs/heads/main'
       env:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
       run: |
+        set -eux
         python3 -m pip install github3.py
         python3 wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/dist
