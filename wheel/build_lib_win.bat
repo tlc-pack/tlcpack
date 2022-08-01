@@ -11,7 +11,7 @@ cmake -A x64 -Thost=x64 ^
       -DUSE_RPC=ON ^
       -DUSE_SORT=ON ^
       -DUSE_RANDOM=ON ^
-      -DSUMMARIZE=ONE ^
+      -DSUMMARIZE=ON ^
       -DUSE_GRAPH_RUNTIME_DEBUG=ON ^
       ..
 

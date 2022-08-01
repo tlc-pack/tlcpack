@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-      - release/*
-      - release-build-macos
   pull_request:
     branches:
       - main
@@ -20,7 +18,8 @@ jobs:
       matrix:
         os:
           - macOS-latest
-#        pkg: ['tlcpack', 'tlcpack-nightly']
+       pkg:
+          - apache-tvm
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -46,14 +45,12 @@ jobs:
       run: |
         git clone https://github.com/apache/tvm tvm --recursive
     - name: Sync Package
-      env:
-        TAG: apache-tvm
       run: |
         set -eux
         python3 common/sync_package.py \
           --package-name apache-tvm \
           --use-public-version \
-          "$TAG"
+          ${{ matrix.pkg }}
     - name: Build@MacOS
       if: startsWith(matrix.os, 'macOS')
       shell: bash -l {0}
@@ -110,20 +107,6 @@ jobs:
         python -m pip install setuptools Cython wheel
         cd tvm/python
         python setup.py bdist_wheel
-    # Use system python instead of conda for upload
-    - name: Wheel-Deploy-Pypi
-      # if: github.ref == 'refs/heads/main'
-      env:
-        TWINE_NON_INTERACTIVE: 1
-        # TWINE_REPOSITORY: pypi
-        # TWINE_USERNAME: __token__
-        # TWINE_PASSWORD: ${{ secrets.PYPI_API_KEY }}
-      run: |
-        set -eux
-        python3 -m pip install twine
-        find .
-        # find tvm/python | grep wheels
-        # twine upload tvm/python/repaired_wheels/*
     - uses: actions/upload-artifact@v3
       with:
         name: release-wheels
@@ -132,11 +115,12 @@ jobs:
       with:
         name: release-build
         path: tvm/python/build/
-#     - name: Wheel-Deploy
-# #      if: github.ref == 'refs/heads/main'
-#       env:
-#         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
-#       run: |
-#         set -eux
-#         python3 -m pip install github3.py
-#         python3 wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/dist
+    # Use system python instead of conda for upload
+    - name: Wheel-Deploy
+      if: github.ref == 'refs/heads/main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
+      run: |
+        set -eux
+        python3 -m pip install github3.py
+        python3 wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/dist

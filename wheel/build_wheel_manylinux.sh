@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+set -eux
 
 source /multibuild/manylinux_utils.sh
 
 function usage() {
     echo "Usage: $0 [--cuda CUDA]"
     echo
-    echo -e "--cuda {none 10.2 11.0 11.1 11.3}"
+    echo -e "--cuda {none 10.2 11.0 11.1 11.3, 11.6}"
     echo -e "\tSpecify the CUDA version in the TVM (default: none)."
 }
 
@@ -45,7 +46,7 @@ function audit_tlcpack_wheel() {
 TVM_PYTHON_DIR="/workspace/tvm/python"
 PYTHON_VERSIONS_CPU=("3.7" "3.8" "3.9" "3.10")
 PYTHON_VERSIONS_GPU=("3.7" "3.8")
-CUDA_OPTIONS=("none" "10.2" "11.0" "11.1" "11.3")
+CUDA_OPTIONS=("none" "10.2" "11.0" "11.1" "11.3" "11.6")
 CUDA="none"
 
 while [[ $# -gt 0 ]]; do
@@ -58,13 +59,13 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             usage
-            exit -1
+            exit 1
             ;;
         *) # unknown option
             echo "Unknown argument: $arg"
             echo
             usage
-            exit -1
+            exit 1
             ;;
     esac
 done
@@ -72,8 +73,8 @@ done
 if ! in_array "${CUDA}" "${CUDA_OPTIONS[*]}" ; then
     echo "Invalid CUDA option: ${CUDA}"
     echo
-    echo 'CUDA can only be {"none", "10.0", "10.1", "10.2"}'
-    exit -1
+    echo 'CUDA can only be' "${CUDA_OPTIONS[@]}"
+    exit 1
 fi
 
 if [[ ${CUDA} == "none" ]]; then
