@@ -45,7 +45,7 @@ function audit_tlcpack_wheel() {
 
 TVM_PYTHON_DIR="/workspace/tvm/python"
 # PYTHON_VERSIONS_CPU=("3.7" "3.8" "3.9" "3.10")
-PYTHON_VERSIONS_GPU=("3.7" "3.8", "3.9")
+PYTHON_VERSIONS_GPU=("3.7" "3.8", "3.9" "3.10")
 CUDA_OPTIONS=("none" "10.2" "11.0" "11.1" "11.3")
 CUDA="none"
 
