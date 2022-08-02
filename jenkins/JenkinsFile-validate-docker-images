@@ -138,7 +138,7 @@ pipeline {
           agent { node { label 'CPU' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-cpu")) {
-              cleanW
+              cleanWs();
               // many images can be processed on a single CPU node
               retag_and_upload_to_docker_hub("ci_lint");
               retag_and_upload_to_docker_hub("ci_cpu");
