@@ -118,7 +118,7 @@ pipeline {
               [$class: 'StringParameterValue', name: 'ci_gpu_param', value: "${DOCKERHUB_USER}/ci_gpu:${DOCKER_TAG}"],
               [$class: 'StringParameterValue', name: 'ci_wasm_param', value: "${DOCKERHUB_USER}/ci_wasm:${DOCKER_TAG}"],
               [$class: 'StringParameterValue', name: 'ci_i386_param', value: "${DOCKERHUB_USER}/ci_i386:${DOCKER_TAG}"],
-              [$class: 'StringParameterValue', name: 'ci_qemu_param', value: "${DOCKERHUB_USER}/ci_qemu:${DOCKER_TAG}"],
+              [$class: 'StringParameterValue', name: 'ci_cortexm_param', value: "${DOCKERHUB_USER}/ci_cortexm:${DOCKER_TAG}"],
               [$class: 'StringParameterValue', name: 'ci_arm_param', value: "${DOCKERHUB_USER}/ci_arm:${DOCKER_TAG}"],
               [$class: 'StringParameterValue', name: 'ci_hexagon_param', value: "${DOCKERHUB_USER}/ci_hexagon:${DOCKER_TAG}"]
             ]
@@ -138,13 +138,13 @@ pipeline {
           agent { node { label 'CPU' } }
           steps {
             ws(per_exec_ws("tvm/docker-ci-cpu")) {
-              cleanWs();
+              cleanW
               // many images can be processed on a single CPU node
               retag_and_upload_to_docker_hub("ci_lint");
               retag_and_upload_to_docker_hub("ci_cpu");
               retag_and_upload_to_docker_hub("ci_wasm");
               retag_and_upload_to_docker_hub("ci_i386");
-              retag_and_upload_to_docker_hub("ci_qemu");
+              retag_and_upload_to_docker_hub("ci_cortexm");
               retag_and_upload_to_docker_hub("ci_hexagon");
             }
           } // steps
@@ -154,7 +154,7 @@ pipeline {
               cleanup_docker_image("ci_cpu");
               cleanup_docker_image("ci_wasm");
               cleanup_docker_image("ci_i386");
-              cleanup_docker_image("ci_qemu");
+              cleanup_docker_image("ci_cortexm");
               cleanup_docker_image("ci_hexagon");
               cleanWs();
             }
@@ -200,7 +200,7 @@ pipeline {
   } // stages
   post {
     success {
-      discordSend description: "Validated images published on DockerHub with tag `${DOCKER_VALIDATED_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${DOCKER_VALIDATED_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_qemu`, `ci_wasm`.",
+      discordSend description: "Validated images published on DockerHub with tag `${DOCKER_VALIDATED_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${DOCKER_VALIDATED_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_cortexm`, `ci_wasm`.",
         link: "https://hub.docker.com/u/tlcpackstaging/",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
