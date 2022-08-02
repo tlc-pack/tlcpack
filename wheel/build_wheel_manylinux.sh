@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 
+set -ex
+
 source /multibuild/manylinux_utils.sh
+
+TVM_PYTHON_DIR="/workspace/tvm/python"
+PYTHON_VERSIONS_CPU=("3.7" "3.8" "3.9" "3.10")
+PYTHON_VERSIONS_GPU=("3.7" "3.8" "3.9" "3.10")
+CUDA_OPTIONS=("none" "10.2" "11.1" "11.3" "11.6")
+CUDA="none"
 
 function usage() {
     echo "Usage: $0 [--cuda CUDA]"
     echo
-    echo -e "--cuda {none 10.2 11.1 11.3 11.6}"
+    echo -e "--cuda" "${CUDA_OPTIONS[@]}"
     echo -e "\tSpecify the CUDA version in the TVM (default: none)."
 }
 
@@ -36,11 +44,6 @@ function audit_tlcpack_wheel() {
       auditwheel repair ${AUDITWHEEL_OPTS} dist/*cp${python_version_str}*.whl
 }
 
-TVM_PYTHON_DIR="/workspace/tvm/python"
-PYTHON_VERSIONS_CPU=("3.7" "3.8" "3.9" "3.10")
-PYTHON_VERSIONS_GPU=("3.7" "3.8")
-CUDA_OPTIONS=("none" "10.2" "11.1" "11.3" "11.6")
-CUDA="none"
 
 while [[ $# -gt 0 ]]; do
     arg="$1"
@@ -52,22 +55,35 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             usage
-            exit -1
+            exit 1
             ;;
         *) # unknown option
             echo "Unknown argument: $arg"
             echo
             usage
-            exit -1
+            exit 1
             ;;
     esac
 done
 
+for python_version in ${PYTHON_VERSIONS[*]}
+do
+    echo "> Looking for Python ${python_version}."
+    cpython_dir="$(cpython_path ${python_version} ${UNICODE_WIDTH} 2> /dev/null)"
+    if [ -d "${cpython_dir}" ]; then
+      echo "Python ${python_version} found";
+    else
+      echo "Python ${python_version} not found";
+      exit 1
+    fi
+done
+
+
 if ! in_array "${CUDA}" "${CUDA_OPTIONS[*]}" ; then
     echo "Invalid CUDA option: ${CUDA}"
     echo
-    echo 'CUDA can only be {"none", "10.2", "11.1", "11.3", "11.6"}'
-    exit -1
+    echo 'CUDA can only be ' "${CUDA_OPTIONS[@]}"
+    exit 1
 fi
 
 if [[ ${CUDA} == "none" ]]; then
@@ -95,6 +111,7 @@ echo set\(USE_ARM_COMPUTE_LIB /opt/arm/acl\) >> config.cmake
 echo set\(USE_MICRO ON\) >> config.cmake
 echo set\(USE_MICRO_STANDALONE_RUNTIME ON\) >> config.cmake
 echo set\(USE_ETHOSU ON\) >> config.cmake
+echo set\(SUMMARIZE ON\) >> config.cmake
 echo set\(USE_CMSISNN ON\) >> config.cmake
 if [[ ${CUDA} != "none" ]]; then
     echo set\(USE_CUDA ON\) >> config.cmake
@@ -128,6 +145,5 @@ do
     else
       echo "Python ${python_version} not found. Skipping.";
     fi
-
 done
 

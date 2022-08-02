@@ -1,0 +1,157 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - release_workflow
+  workflow_dispatch:
+    inputs:
+      publish:
+        type: boolean
+        description: send packages to PyPi and the tlcpack wheels list
+
+jobs:
+  linux-pypi:
+    strategy:
+      fail-fast: false
+      matrix:
+        # matrix of build configs
+        config:
+          - cuda: 'none'
+            image: 'tlcpack/package-cpu:1d98bf9'
+            package_name: 'apache-tvm'
+          - cuda: '10.2'
+            image: 'tlcpack/package-cu102:1d98bf9'
+            package_name: 'apache-tvm'
+          - cuda: '11.3'
+            image: 'tlcpack/package-cu113:1d98bf9'
+            package_name: 'apache-tvm'
+          - cuda: '11.6'
+            image: 'tlcpack/package-cu116:1d98bf9'
+            package_name: 'apache-tvm'
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: TVM checkout
+      run: |
+        set -eux
+        git clone https://github.com/apache/tvm tvm --recursive
+    - name: Sync package
+      run: |
+        set -euxo pipefail
+        python3 common/sync_package.py \
+          --cuda ${{ matrix.config.cuda }} \
+          --package-name ${{ matrix.config.package_name }} \
+          --use-public-version \
+          pypi
+        cd tvm
+        cat ../wheel/setup.py.patch | patch -p1 -d .
+    - name: Build wheel
+      env:
+        IMAGE: ${{ matrix.config.image }}
+        CUDA: ${{ matrix.config.cuda }}
+      run: |
+        set -eux
+        docker/bash.sh --no-gpu $IMAGE ./wheel/build_wheel_manylinux.sh --cuda $CUDA
+    - name: Test
+      if: matrix.config.cuda == 'none'
+      env:
+        IMAGE: ${{ matrix.config.image }}
+        WHEEL_TEST: "True"
+      run: |
+        set -eux
+        docker/bash.sh --no-gpu $IMAGE ./wheel/run_tests.sh
+    - uses: actions/upload-artifact@v3
+      with:
+        name: linux-wheel-${{ matrix.config.package_name }}-${{ matrix.config.cuda }}
+        path: tvm/python/repaired_wheels
+    - name: Upload to PyPi
+      if: ${{ matrix.config.cuda == 'none' && github.event.inputs.publish }}
+      env:
+        TWINE_NON_INTERACTIVE: 1
+        TWINE_REPOSITORY: pypi
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_KEY }}
+      run: |
+        set -eux
+        python3 -m pip install twine
+        twine upload tvm/python/repaired_wheels/*
+    - name: Upload to tlcpack wheels
+      if: ${{ github.event.inputs.publish }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
+      run: |
+        set -eux
+        python3 -m pip install github3.py
+        python3 wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/repaired_wheels
+  pypi-cpu:
+    strategy:
+      fail-fast: false
+      matrix:
+        # matrix of build configs
+        os:
+          - macOS-latest
+          # - windows-latest
+        python_version:
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: tlcpack-build
+        channel-priority: strict
+        environment-file: conda/build-environment.yaml
+        auto-activate-base: false
+        use-only-tar-bz2: true
+        python-version: ${{ matrix.python_version }}
+    - name: Conda info
+      shell: bash -l {0}
+      run: |
+        conda info
+        conda list
+    - name: TVM checkout
+      run: |
+        git clone https://github.com/apache/tvm tvm --recursive
+    - name: Sync Package
+      shell: bash -l {0}
+      run: |
+        python3 common/sync_package.py --package-name apache-tvm --use-public-version pypi
+    - name: Build (MacOS)
+      shell: bash -l {0}
+      if: startsWith(matrix.os, 'macOS')
+      run: |
+        wheel/build_lib_osx.sh
+    - name: Build (Windows)
+      if: startsWith(matrix.os, 'windows')
+      shell: cmd /C call {0}
+      run: >-
+        wheel/build_lib_win.bat
+    - name: Build wheel
+      shell: bash -l {0}
+      env:
+        MACOSX_DEPLOYMENT_TARGET: 10.15
+      run: |
+        python -m pip install setuptools Cython wheel
+        cd tvm/python
+        python setup.py bdist_wheel
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-release-wheels-${{ matrix.python_version }}
+        path: tvm/python/dist/
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.os }}-release-build-${{ matrix.python_version }}
+        path: tvm/python/build/
+    - name: Upload to tlcpack wheels
+      if: ${{ github.event.inputs.publish }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
+      run: |
+        set -eux
+        python3 -m pip install github3.py
+        python3 wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/dist

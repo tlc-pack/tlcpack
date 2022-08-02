@@ -40,6 +40,7 @@ RUN conda create -n py310 python=3.10 -y
 COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
 RUN bash /install/centos_install_python_package.sh
 
+
 COPY install/centos_install_auditwheel.sh /install/centos_install_auditwheel.sh
 RUN bash /install/centos_install_auditwheel.sh
 
