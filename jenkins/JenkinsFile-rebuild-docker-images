@@ -283,23 +283,23 @@ pipeline {
           } // post
         } // stage
 
-        stage('ci-qemu') {
+        stage('ci-cortexm') {
           agent { node { label 'CPU' } }
           steps {
-            ws(per_exec_ws("tvm/docker-ci-qemu")) {
+            ws(per_exec_ws("tvm/docker-ci-cortexm")) {
               cleanWs();
               init_git()
               dir('tvm'){
-                sh "${docker_build} ci_qemu --tag ${TVM_DOCKER_TAG}"
+                sh "${docker_build} ci_cortexm --tag ${TVM_DOCKER_TAG}"
               }
 
-              upload_to_docker_hub("ci_qemu");
+              upload_to_docker_hub("ci_cortexm");
 
             }
           } // steps
           post {
             always {
-              cleanup_docker_image("ci_qemu");
+              cleanup_docker_image("ci_cortexm");
               cleanWs();
             }
           } // post
@@ -363,7 +363,7 @@ pipeline {
           [$class: 'StringParameterValue', name: 'tlcpack_staging_tag', value: "${TVM_DOCKER_TAG}"]
         ]
 
-      discordSend description: "New images published on DockerHub with tag `${TVM_DOCKER_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${TVM_DOCKER_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_qemu`, `ci_wasm`, `ci_hexagon`, `ci_riscv`.",
+      discordSend description: "New images published on DockerHub with tag `${TVM_DOCKER_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${TVM_DOCKER_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_cortexm`, `ci_wasm`, `ci_hexagon`, `ci_riscv`.",
         link: "https://hub.docker.com/u/tlcpackstaging/",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
