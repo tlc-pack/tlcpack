@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - docker_gha
   workflow_dispatch:
   schedule:
     - cron: '0 5 * * 3'
@@ -19,6 +20,7 @@ jobs:
           - cu110
           - cu111
           - cu113
+          - cu116
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -35,6 +37,7 @@ jobs:
         cd docker
         bash build_image.sh ${{ matrix.platform }}
     - name: Upload to Docker Hub
+      if: ${{ github.ref == 'refs/heads/docker_gha' }}
       run: |
         set -eux
         NEW_TAG=$(git log -1 --format='%h')
