@@ -13,7 +13,7 @@ install_path="/opt/arm/$repo_dir"
 tmpdir=$(mktemp -d)
 
 # install dependencies for building Arm(r) Ethos(tm)-N series Driver Stack
-yum install -y sparse bc devtoolset-7-gcc-c++ wget
+yum install -y bc devtoolset-7-gcc-c++ wget
 
 source /opt/rh/devtoolset-7/enable
 
