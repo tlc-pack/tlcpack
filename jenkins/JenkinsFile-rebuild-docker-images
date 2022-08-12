@@ -173,6 +173,28 @@ pipeline {
           } // post
         } // stage
 
+        stage('ci-minimal') {
+          agent { node { label 'CPU' } }
+          steps {
+            ws(per_exec_ws("tvm/docker-ci-minimal")) {
+              cleanWs();
+              init_git()
+              dir('tvm'){
+                sh "${docker_build} ci_minimal --tag ${TVM_DOCKER_TAG}"
+              }
+
+              upload_to_docker_hub("ci_minimal");
+
+            }
+          } // steps
+          post {
+            always {
+              cleanup_docker_image("ci_minimal");
+              cleanWs();
+            }
+          } // post
+        } // stage
+
         stage('ci-gpu') {
           agent { node { label 'GPU' } }
           steps {
@@ -363,7 +385,7 @@ pipeline {
           [$class: 'StringParameterValue', name: 'tlcpack_staging_tag', value: "${TVM_DOCKER_TAG}"]
         ]
 
-      discordSend description: "New images published on DockerHub with tag `${TVM_DOCKER_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${TVM_DOCKER_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_cortexm`, `ci_wasm`, `ci_hexagon`, `ci_riscv`.",
+      discordSend description: "New images published on DockerHub with tag `${TVM_DOCKER_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${TVM_DOCKER_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_minimal`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_cortexm`, `ci_wasm`, `ci_hexagon`, `ci_riscv`.",
         link: "https://hub.docker.com/u/tlcpackstaging/",
         result: currentBuild.currentResult,
         title: "${JOB_NAME}",
