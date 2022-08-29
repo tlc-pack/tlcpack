@@ -32,10 +32,13 @@ COPY install/centos_install_conda.sh /install/centos_install_conda.sh
 RUN bash /install/centos_install_conda.sh
 ENV PATH=/opt/conda/bin:${PATH}
 
-# install python packages
+# Install Python
+RUN conda create -n py37 python=3.7 -y
+RUN conda create -n py38 python=3.8 -y
+RUN conda create -n py39 python=3.9 -y
+RUN conda create -n py310 python=3.10 -y
 COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
-RUN bash /install/centos_install_python_package.sh 3.7
-RUN bash /install/centos_install_python_package.sh 3.8
+RUN bash /install/centos_install_python_package.sh
 
 COPY install/centos_install_auditwheel.sh /install/centos_install_auditwheel.sh
 RUN bash /install/centos_install_auditwheel.sh
