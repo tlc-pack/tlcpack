@@ -18,9 +18,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-zephyr = 'zephyr'
-arduino = 'arduino'
-
 // Global variable to store the Vagrant image tag
 // by this build.
 TVM_RVM_TAG = ''
@@ -29,30 +26,25 @@ def per_exec_ws(folder) {
   return "workspace/exec_${env.EXECUTOR_NUMBER}/" + folder
 }
 
-def rvm_build(platform) {
+def rvm_build() {
   sh """
-    apps/microtvm/reference-vm/scripts/reference_vm_build.sh ${platform}
+    apps/microtvm/reference-vm/scripts/reference_vm_build.sh
   """
 }
 
-def rvm_upload(platform) {
+def rvm_upload() {
   sh """
     vagrant cloud auth login -u ${VAGRANTHUB_USER} -t ${VAGRANTHUB_TOKEN}
   """
 
   sh """
-    apps/microtvm/reference-vm/scripts/reference_vm_release.sh ${platform} tlcpackstaging/microtvm-${platform} 0.0.${TVM_RVM_TAG}
+    apps/microtvm/reference-vm/scripts/reference_vm_release.sh tlcpackstaging/microtvm 0.0.${TVM_RVM_TAG}
   """
 }
 
-def rvm_test(platform) {
-  if (platform != 'zephyr') {
-    return
-  }
-
-  board = 'qemu_x86'
+def rvm_test() {
   sh """
-    apps/microtvm/reference-vm/scripts/reference_vm_test.sh ${platform} ${board}
+    apps/microtvm/reference-vm/scripts/reference_vm_test.sh ${platform} 'qemu_x86'
   """
 }
 
@@ -135,45 +127,23 @@ pipeline {
     } // stage: Prepare
 
     stage('Build') {
-      parallel {
-        stage('ci-zephyr') {
-          agent { node { label 'CPU-MICROTVM' } }
-          steps {
-            ws(per_exec_ws('tvm/rvm-ci-zephyr')) {
-              cleanWs()
-              init_git()
-              dir('tvm') {
-                rvm_build(zephyr)
-                rvm_upload(zephyr)
-                rvm_test(zephyr)
-              }
-            }
-          } // steps
-          post {
-            always {
-              cleanWs()
-            }
-          } // post
-        } // stage
-        stage('ci-arduino') {
-          agent { node { label 'CPU-MICROTVM' } }
-          steps {
-            ws(per_exec_ws('tvm/rvm-ci-arduino')) {
-              cleanWs()
-              init_git()
-              dir('tvm') {
-                rvm_build(arduino)
-                rvm_upload(arduino)
-              }
-            }
-          } // steps
-          post {
-            always {
-              cleanWs()
-            }
-          } // post
-        } // stage
-      } // parallel
+      agent { node { label 'CPU-MICROTVM' } }
+      steps {
+        ws(per_exec_ws('tvm/rvm-ci')) {
+          cleanWs()
+          init_git()
+          dir('tvm') {
+            rvm_build()
+            rvm_upload()
+            rvm_test()
+          }
+        }
+      } // steps
+      post {
+        always {
+          cleanWs()
+        }
+      } // post
     } // stage: Build
   } // stages
   post {
