@@ -7,7 +7,7 @@ LLVM_VERSION_MAJOR=$1
 source /multibuild/manylinux_utils.sh
 
 detect_llvm_version() {
-  curl -sL "https://api.github.com/repos/llvm/llvm-project/releases?per_page=50" | \
+  curl -sL "https://api.github.com/repos/llvm/llvm-project/releases?per_page=100" | \
     grep tag_name | \
     grep -o "llvmorg-${LLVM_VERSION_MAJOR}[^\"]*" | \
     grep -v rc | \
