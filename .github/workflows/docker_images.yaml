@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - docker_gha
   workflow_dispatch:
   schedule:
     - cron: '0 5 * * 3'
@@ -37,7 +36,7 @@ jobs:
         cd docker
         bash build_image.sh ${{ matrix.platform }}
     - name: Upload to Docker Hub
-      if: ${{ github.ref == 'refs/heads/docker_gha' }}
+      if: ${{ github.ref == 'refs/heads/main' }}
       run: |
         set -eux
         NEW_TAG=$(git log -1 --format='%h')
