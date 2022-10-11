@@ -3,7 +3,7 @@
 set -e
 set -x
 
-compute_lib_version="v21.08"
+compute_lib_version="v22.08"
 compute_lib_variant="arm64-v8a-neon"
 compute_lib_full_name="arm_compute-${compute_lib_version}-bin-linux-${compute_lib_variant}"
 compute_lib_base_url="https://github.com/ARM-software/ComputeLibrary/releases/download/${compute_lib_version}"
