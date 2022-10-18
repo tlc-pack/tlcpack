@@ -46,7 +46,6 @@ jobs:
           --use-public-version \
           pypi
         cd tvm
-        cat ../wheel/setup.py.patch | patch -p1 -d .
     - name: Build wheel
       env:
         IMAGE: ${{ matrix.config.image }}
