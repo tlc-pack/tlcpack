@@ -50,6 +50,8 @@ jobs:
       shell: bash -l {0}
       run: >-
         wheel/build_lib_osx.sh
+      env:
+        MACOSX_DEPLOYMENT_TARGET: 10.15
     - name: Build@Win
       if: startsWith(matrix.os, 'windows')
       shell: cmd /C call {0}

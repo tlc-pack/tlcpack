@@ -9,7 +9,7 @@ TOOLCHAIN_OPT=""
 if [ "$target_platform" == "osx-64" ]; then
     # macOS 64 bits
     GPU_OPT="-DUSE_METAL=ON"
-    TOOLCHAIN_OPT="-DCMAKE_OSX_DEPLOYMENT_TARGET=10.11"
+    TOOLCHAIN_OPT="-DCMAKE_OSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET:-10.15}"
 elif [ "$target_platform" == "linux-64" ]; then
     TOOLCHAIN_OPT="-DCMAKE_TOOLCHAIN_FILE=${RECIPE_DIR}/cross-linux.cmake"
 fi
