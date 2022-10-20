@@ -21,24 +21,18 @@ function in_array() {
 }
 
 function build_tlcpack_wheel() {
-    python_version=$1
-
-    CPYTHON_PATH="$(cpython_path ${python_version} ${UNICODE_WIDTH})"
-    PYTHON_BIN="${CPYTHON_PATH}/bin/python"
-    PIP_BIN="${CPYTHON_PATH}/bin/pip"
+    python_dir=$1
+    PYTHON_BIN="${python_dir}/bin/python"
 
     cd "${TVM_PYTHON_DIR}" && \
-      PATH="${CPYTHON_PATH}/bin:$PATH" ${PYTHON_BIN} setup.py bdist_wheel
+        ${PYTHON_BIN} setup.py bdist_wheel
 }
 
 function audit_tlcpack_wheel() {
-    python_version=$1
-
-    # Remove the . in version string, e.g. "3.8" turns into "38"
-    python_version_str="$(echo "${python_version}" | sed -r 's/\.//g')"
+    python_version_str=$1
 
     cd "${TVM_PYTHON_DIR}" && \
-      mkdir -p repared_wheel && \
+      mkdir -p repaired_wheel && \
       auditwheel repair ${AUDITWHEEL_OPTS} dist/*cp${python_version_str}*.whl
 }
 
@@ -121,13 +115,16 @@ UNICODE_WIDTH=32  # Dummy value, irrelevant for Python 3
 for python_version in ${PYTHON_VERSIONS[*]}
 do
     echo "> Looking for Python ${python_version}."
-    cpython_dir="$(cpython_path ${python_version} ${UNICODE_WIDTH} 2> /dev/null)"
+    
+    # Remove the . in version string, e.g. "3.8" turns into "38"
+    python_version_str="$(echo "${python_version}" | sed -r 's/\.//g')"
+    cpython_dir="/opt/conda/envs/py${python_version_str}/"
     if [ -d "${cpython_dir}" ]; then
       echo "Generating package for Python ${python_version}."
-      build_tlcpack_wheel ${python_version}
+      build_tlcpack_wheel ${cpython_dir}
 
       echo "Running auditwheel on package for Python ${python_version}."
-      audit_tlcpack_wheel ${python_version}
+      audit_tlcpack_wheel ${python_version_str}
     else
       echo "Python ${python_version} not found. Skipping.";
     fi
