@@ -18,8 +18,9 @@ jobs:
         config:
           - cuda: '10.2'
             image: 'tlcpack/package-cu102:7bfdf7e'
-          - cuda: '11.0'
-            image: 'tlcpack/package-cu110:7bfdf7e'
+          # Conda forge is not shipping a cudnn package with support for CUDA 11.0
+          # - cuda: '11.0'
+          #   image: 'tlcpack/package-cu110:7bfdf7e'
           - cuda: '11.1'
             image: 'tlcpack/package-cu111:7bfdf7e'
           - cuda: '11.3'
