@@ -16,7 +16,7 @@ jobs:
         platform:
           - cpu
           - cu102
-          - cu110
+          # - cu110
           - cu111
           - cu113
           - cu116
