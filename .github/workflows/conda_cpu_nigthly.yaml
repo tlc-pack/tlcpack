@@ -52,6 +52,8 @@ jobs:
     - name: Conda-Build@MacOS
       if: startsWith(matrix.os, 'macOS')
       shell: bash -l {0}
+      env:
+         MACOSX_DEPLOYMENT_TARGET: 10.15
       run: >-
         conda build --output-folder=conda/pkg -m conda/build_config.yaml conda/recipe
     - name: Conda-Build@Linux
