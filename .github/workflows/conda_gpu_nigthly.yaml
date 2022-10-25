@@ -25,6 +25,8 @@ jobs:
             image: 'tlcpack/package-cu111:7bfdf7e'
           - cuda: '11.3'
             image: 'tlcpack/package-cu113:7bfdf7e'
+          - cuda: '11.6'
+            image: 'tlcpack/package-cu116:7bfdf7e'
 
     runs-on: ubuntu-latest
 
