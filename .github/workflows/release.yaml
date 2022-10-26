@@ -18,16 +18,16 @@ jobs:
         # matrix of build configs
         config:
           - cuda: 'none'
-            image: 'tlcpack/package-cpu:1d98bf9'
+            image: 'tlcpack/package-cpu:0b3b4c9'
             package_name: 'apache-tvm'
           - cuda: '10.2'
-            image: 'tlcpack/package-cu102:1d98bf9'
+            image: 'tlcpack/package-cu102:0b3b4c9'
             package_name: 'apache-tvm-cu102'
           - cuda: '11.3'
-            image: 'tlcpack/package-cu113:1d98bf9'
+            image: 'tlcpack/package-cu113:0b3b4c9'
             package_name: 'apache-tvm-cu113'
           - cuda: '11.6'
-            image: 'tlcpack/package-cu116:1d98bf9'
+            image: 'tlcpack/package-cu116:0b3b4c9'
             package_name: 'apache-tvm-cu116'
 
     runs-on: ubuntu-latest
