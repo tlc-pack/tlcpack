@@ -44,10 +44,18 @@ def extract_group_key_order(name):
 
     dev_pos = ver.find(".dev")
     if dev_pos != -1:
+        rc_pos = ver.find("rc")
         # all nightly share the same group
         group_key.append("nightly")
         # dev number as the order.
-        pub_ver = [int(x) for x in ver[:dev_pos].split(".")]
+        pos = dev_pos
+        if rc_pos != -1:
+            pos = rc_pos
+        pub_ver = [int(x) for x in ver[:pos].split(".")]
+        if rc_pos != -1:
+            pub_ver += [int(ver[rc_pos + 2 : dev_pos])]
+        else:
+            pub_ver += [int(1e9)]
         order = pub_ver + [int(ver[dev_pos + 4 :])]
     else:
         # stable version has its own group
