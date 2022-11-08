@@ -115,10 +115,17 @@ UNICODE_WIDTH=32  # Dummy value, irrelevant for Python 3
 for python_version in ${PYTHON_VERSIONS[*]}
 do
     echo "> Looking for Python ${python_version}."
-    
+
     # Remove the . in version string, e.g. "3.8" turns into "38"
     python_version_str="$(echo "${python_version}" | sed -r 's/\.//g')"
     cpython_dir="/opt/conda/envs/py${python_version_str}/"
+
+    # For compatibility in environments where Conda is not installed,
+    # revert back to previous method of locating cpython_dir.
+    if ! [ -d "${cpython_dir}" ]; then
+      cpython_dir=$(cpython_path "${python_version}" "${UNICODE_WIDTH}" 2> /dev/null)
+    fi
+
     if [ -d "${cpython_dir}" ]; then
       echo "Generating package for Python ${python_version}."
       build_tlcpack_wheel ${cpython_dir}
