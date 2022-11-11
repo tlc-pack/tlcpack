@@ -159,6 +159,10 @@ def main():
                         choices=["none", "10.2", "11.1", "11.3", "11.6"],
                         help="CUDA version to be linked to the resultant binaries,"
                              "or none, to disable CUDA. Defaults to none.")
+    parser.add_argument("--skip-checkout",
+                        action="store_true",
+                        help="Run the syncronization process without checking out new source."
+                             "For use when running in an existing checkout.")
     parser.add_argument("--package-name",
                         type=str,
                         default="",
@@ -175,10 +179,11 @@ def main():
 
     package_name = args.package_name or args.build_type
 
-    if "nightly" not in args.build_type:
-        checkout_source(args.src, __stable_build__)
-    else:
-        checkout_source(args.src, args.revision)
+    if not args.skip_checkout:
+        if "nightly" not in args.build_type:
+            checkout_source(args.src, __stable_build__)
+        else:
+            checkout_source(args.src, args.revision)
 
     update_libinfo(args)
     update_setup(args, package_name)
