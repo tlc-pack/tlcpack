@@ -7,7 +7,7 @@ python3_bin="$(cpython_path 3.7)/bin/python"
 
 repo_url="https://github.com/Arm-software/ethos-n-driver-stack"
 repo_dir="ethosn-driver"
-repo_revision="22.08"
+repo_revision="22.11"
 install_path="/opt/arm/$repo_dir"
 
 tmpdir=$(mktemp -d)
