@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - upload
   pull_request:
     branches:
       - main
@@ -57,7 +58,7 @@ jobs:
       run: |
         docker/bash.sh --no-gpu $IMAGE ./wheel/run_tests.sh
     - name: Wheel-Deploy
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/upload'
       env:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
       run: |
