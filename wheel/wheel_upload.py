@@ -3,6 +3,8 @@
 import github3
 from github3.exceptions import ConnectionError
 import os
+import time
+import random
 import logging
 import argparse
 import subprocess
@@ -22,15 +24,24 @@ def upload(args, path):
                 print(f"Remove duplicated file {name}")
     print(f"Start to upload {path} to {args.repo}, this can take a while...")
 
+    backoff = 1
+    # max backoff 10min
+    max_backoff = 60 * 10
+    backoff_scale = 2
     for retry_counter in range(args.timeout_retry + 1):
         try:
             if not args.dry_run:
                 release.upload_asset("application/octet-stream", name, content_bytes)
             break
         except ConnectionError:
-            print(f"upload failed due to time out retry... retry_counter={retry_counter}")
             if retry_counter == args.timeout_retry:
                 raise RuntimeError(f"Failed to upload after {retry_counter} retries")
+            # random exponential backoff to avoid concurrent write
+            backoff = min(backoff * backoff_scale, max_backoff)
+            retry_gap = backoff * (random.random() + 0.5)
+            print(f"upload failed due to time out, retry after {retry_gap} secs...")
+            time.sleep(retry_gap)
+            print(f"retry upload retry_counter={retry_counter}")
     print(f"Finish uploading {path}")
 
 
@@ -40,7 +51,7 @@ def main():
     parser.add_argument("--tag", type=str)
     parser.add_argument("--repo", type=str, default="tlc-pack/tlcpack")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--timeout-retry", type=int, default=5)
+    parser.add_argument("--timeout-retry", type=int, default=10)
     parser.add_argument("path", type=str)
 
     if "GITHUB_TOKEN" not in os.environ:
