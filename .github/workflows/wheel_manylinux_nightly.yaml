@@ -19,19 +19,19 @@ jobs:
         # matrix of build configs
         config:
           - cuda: 'none'
-            image: 'tlcpack/package-cpu:7bfdf7e'
+            image: 'tlcpack/package-cpu:2fddbe0'
           - cuda: '10.2'
-            image: 'tlcpack/package-cu102:7bfdf7e'
+            image: 'tlcpack/package-cu102:2fddbe0'
           # CUDA 11.0 is not supported for Conda build,
           # Let's drop support here as well.
           # - cuda: '11.0'
-          #   image: 'tlcpack/package-cu110:7bfdf7e'
+          #   image: 'tlcpack/package-cu110:2fddbe0'
           - cuda: '11.1'
-            image: 'tlcpack/package-cu111:7bfdf7e'
+            image: 'tlcpack/package-cu111:2fddbe0'
           - cuda: '11.3'
-            image: 'tlcpack/package-cu113:7bfdf7e'
+            image: 'tlcpack/package-cu113:2fddbe0'
           - cuda: '11.6'
-            image: 'tlcpack/package-cu116:7bfdf7e'
+            image: 'tlcpack/package-cu116:2fddbe0'
 
     runs-on: ubuntu-latest
 
