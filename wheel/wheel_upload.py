@@ -34,7 +34,7 @@ def upload(args, path):
     for retry_counter in range(args.timeout_retry + 1):
         try:
             run_upload()
-            break:
+            break
         except ConnectionError:
             if retry_counter == args.timeout_retry:
                 raise RuntimeError(f"Failed to upload after {retry_counter} retries")
