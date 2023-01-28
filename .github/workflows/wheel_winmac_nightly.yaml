@@ -81,8 +81,10 @@ jobs:
     # Use system python instead of conda for upload
     - name: Wheel-Deploy
       if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
-      run: |
-        python3 -m pip install github3.py
-        python3 wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/dist
+      with:
+        files: tvm/python/dist/*.whl
+        tag_name: v0.9.dev0
+        prerelease: true

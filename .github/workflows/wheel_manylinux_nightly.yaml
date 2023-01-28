@@ -58,9 +58,11 @@ jobs:
         docker/bash.sh --no-gpu $IMAGE ./wheel/run_tests.sh
     - name: Wheel-Deploy
       if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
-      run: |
-        python -m pip install pyOpenSSL --upgrade
-        python -m pip install github3.py
-        python wheel/wheel_upload.py --tag v0.7.dev1 tvm/python/repaired_wheels
+      with:
+        files: tvm/python/repaired_wheels/*.whl
+        tag_name: v0.9.dev0
+        prerelease: true
+
