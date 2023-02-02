@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 
+set -exo pipefail
+
 source /multibuild/manylinux_utils.sh
+
+TVM_PYTHON_DIR="/workspace/tvm/python"
+PYTHON_VERSIONS=$(conda env list | grep py | awk '{print $1}' | tr -d py3 | xargs -I {} printf "3.{}\n" | sort -V)
+PYTHON_VERSIONS_CPU=$PYTHON_VERSIONS
+PYTHON_VERSIONS_GPU=$PYTHON_VERSIONS
+CUDA_OPTIONS=("none" "10.2" "11.1" "11.3" "11.6")
+
+
+function activate() {
+    eval "$(conda shell.bash hook)"
+    PYTHON_VERSION=$1
+    ENV_NAME=$(echo "$PYTHON_VERSION" | tr -d 3. | xargs -I {} printf "py3{}\n")
+    conda activate "$ENV_NAME"
+}
+
 
 function usage() {
     echo "Usage: $0 [--cuda CUDA]"
     echo
-    echo -e "--cuda {none 10.2 11.1 11.3 11.6}"
+    echo -e "--cuda" "${CUDA_OPTIONS[@]}"
     echo -e "\tSpecify the CUDA version in the TVM (default: none)."
 }
 
@@ -36,11 +53,6 @@ function audit_tlcpack_wheel() {
       auditwheel repair ${AUDITWHEEL_OPTS} dist/*cp${python_version_str}*.whl
 }
 
-TVM_PYTHON_DIR="/workspace/tvm/python"
-PYTHON_VERSIONS_CPU=("3.7" "3.8" "3.9" "3.10")
-PYTHON_VERSIONS_GPU=("3.7" "3.8")
-CUDA_OPTIONS=("none" "10.2" "11.1" "11.3" "11.6")
-CUDA="none"
 
 while [[ $# -gt 0 ]]; do
     arg="$1"
@@ -52,22 +64,23 @@ while [[ $# -gt 0 ]]; do
             ;;
         -h|--help)
             usage
-            exit -1
+            exit 1
             ;;
         *) # unknown option
             echo "Unknown argument: $arg"
             echo
             usage
-            exit -1
+            exit 1
             ;;
     esac
 done
 
+
 if ! in_array "${CUDA}" "${CUDA_OPTIONS[*]}" ; then
     echo "Invalid CUDA option: ${CUDA}"
     echo
-    echo 'CUDA can only be {"none", "10.2", "11.1", "11.3", "11.6"}'
-    exit -1
+    echo 'CUDA can only be ' "${CUDA_OPTIONS[@]}"
+    exit 1
 fi
 
 if [[ ${CUDA} == "none" ]]; then
@@ -95,6 +108,7 @@ echo set\(USE_ARM_COMPUTE_LIB /opt/arm/acl\) >> config.cmake
 echo set\(USE_MICRO ON\) >> config.cmake
 echo set\(USE_MICRO_STANDALONE_RUNTIME ON\) >> config.cmake
 echo set\(USE_ETHOSU ON\) >> config.cmake
+echo set\(SUMMARIZE ON\) >> config.cmake
 echo set\(USE_CMSISNN ON\) >> config.cmake
 if [[ ${CUDA} != "none" ]]; then
     echo set\(USE_CUDA ON\) >> config.cmake
@@ -106,7 +120,7 @@ fi
 mkdir -p build
 cd build
 cmake ..
-make -j$(nproc)
+make -j"$(nproc)"
 
 UNICODE_WIDTH=32  # Dummy value, irrelevant for Python 3
 
@@ -114,6 +128,7 @@ UNICODE_WIDTH=32  # Dummy value, irrelevant for Python 3
 # so check the existing python versions before generating packages
 for python_version in ${PYTHON_VERSIONS[*]}
 do
+    activate "$python_version"
     echo "> Looking for Python ${python_version}."
 
     # Remove the . in version string, e.g. "3.8" turns into "38"
@@ -135,6 +150,5 @@ do
     else
       echo "Python ${python_version} not found. Skipping.";
     fi
-
 done
 
