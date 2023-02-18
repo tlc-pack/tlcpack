@@ -42,7 +42,7 @@ jobs:
         conda list
     - name: TVM checkout
       run: |
-        git clone https://github.com/apache/tvm tvm --recursive
+        git clone https://github.com/apache/tvm tvm --recursive --single-branch --branch main
     - name: Sync Package
       run: python3 common/sync_package.py ${{ matrix.pkg }}
     - name: Build@MacOS

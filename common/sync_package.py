@@ -26,6 +26,7 @@ def checkout_source(src, tag):
             msg += py_str(out)
             raise RuntimeError(msg)
 
+    run_cmd(["git", "fetch", "--all", "--tags"])
     run_cmd(["git", "checkout", "-f", tag])
     run_cmd(["git", "submodule", "update"])
     print("git checkout %s" % tag)
