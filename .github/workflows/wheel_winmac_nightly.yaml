@@ -41,10 +41,13 @@ jobs:
         conda info
         conda list
     - name: TVM checkout
-      run: |
-        git clone https://github.com/apache/tvm tvm --recursive
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        repository: apache/tvm
+        path: tvm
     - name: Sync Package
-      run: python3 common/sync_package.py ${{ matrix.pkg }}
+      run: python3 common/sync_package.py ${{ matrix.pkg }} --skip-checkout
     - name: Build@MacOS
       if: startsWith(matrix.os, 'macOS')
       shell: bash -l {0}
@@ -86,5 +89,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
       with:
         files: tvm/python/dist/*.whl
-        tag_name: v0.9.dev0
+        tag_name: v0.12.dev
         prerelease: true

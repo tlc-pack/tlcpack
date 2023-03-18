@@ -40,10 +40,13 @@ jobs:
         conda info
         conda list
     - name: TVM checkout
-      run: |
-        git clone https://github.com/apache/tvm tvm --recursive
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        repository: apache/tvm
+        path: tvm
     - name: Sync Package
-      run: python3 common/sync_package.py ${{ matrix.pkg }}
+      run: python3 common/sync_package.py ${{ matrix.pkg }} --skip-checkout
     - name: Conda-Build@Win
       if: startsWith(matrix.os, 'windows')
       shell: cmd /C call {0}
