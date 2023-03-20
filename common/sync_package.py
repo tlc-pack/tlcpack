@@ -8,7 +8,7 @@ import argparse
 # Modify the following two settings during release
 # -----------------------------------------------------------
 # Tag used for stable build.
-__stable_build__ = "v0.11.0"
+__stable_build__ = "v0.11.1"
 # -----------------------------------------------------------
 
 def py_str(cstr):
