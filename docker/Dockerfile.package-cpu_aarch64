@@ -1,6 +1,6 @@
 # Docker image: tlcpack/package-cpu_aarch64
 
-FROM quay.io/pypa/manylinux2014_aarch64:2022-07-27-a8099af
+FROM quay.io/pypa/manylinux2014_aarch64:2023-03-12-25fd859
 
 # install core
 COPY install/centos_install_core_aarch64.sh /install/centos_install_core_aarch64.sh
@@ -29,9 +29,10 @@ RUN bash /install/centos_install_arm_compute_library.sh
 
 # install python packages
 COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
-RUN bash /install/centos_install_python_package.sh 3.6
 RUN bash /install/centos_install_python_package.sh 3.7
 RUN bash /install/centos_install_python_package.sh 3.8
+RUN bash /install/centos_install_python_package.sh 3.9
+RUN bash /install/centos_install_python_package.sh 3.10
 
 COPY install/centos_install_auditwheel.sh /install/centos_install_auditwheel.sh
 RUN bash /install/centos_install_auditwheel.sh
