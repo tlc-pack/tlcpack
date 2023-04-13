@@ -1,0 +1,282 @@
+#!groovy
+// -*- mode: groovy -*-
+
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+
+PACKAGE="pypi-nightly"
+PACKAGE_NAME="apache-tvm"
+CPU_IMAGE = "cpu:${params.TLCPACK_CPU_TAG}"
+AARCH64_IMAGE = "cpu_aarch64:${params.TLCPACK_AARCH64_TAG}"
+
+
+def cleanup_docker_image(image_type) {
+    // Delete images created/tagged by previous steps.
+    sh (
+        script: "docker rmi -f tlcpack/package-${image_type}",
+        label: "Cleanup ${image_type} image"
+    )
+}
+
+
+def clone_tlcpack() {
+    // clone tlcpack repo directly into Jenkins workspace
+    sh (
+        script: "git clone ${params.TLCPACK_GIT_REPO_URL} .",
+        label: "Clone tlcpack into Jenkins workspace",
+    )
+}
+
+
+def clone_tvm() {
+    sh (
+        script: "git clone ${params.TVM_GIT_REPO_URL} --recursive",
+        label: "Clone TVM in to /tvm directory",
+    )
+}
+
+
+def pull_docker_image(image_type) {
+    // The tag is expected to be passed as a Jenkins parameter
+    sh (
+        script: "docker pull tlcpack/package-${image_type}",
+        label: "Pull 'package-${image_type}' from Docker Hub",
+    )
+}
+
+
+def sync_package() {
+    sh (
+        script: """
+            python3 common/sync_package.py \
+              --cuda ${env.GPU} \
+              --package-name ${PACKAGE_NAME} \
+              --use-public-version \
+              ${PACKAGE}
+        """,
+        label: "Sync tlcpack package",
+    )
+}
+
+
+def build_wheels(image_type) {
+    sh (
+        script: """
+            ./docker/bash.sh --no-gpu tlcpack/package-${image_type} \
+                ./wheel/build_wheel_manylinux.sh --cuda ${env.GPU}
+        """,
+        label: "Build wheels on ${image_type}",
+    )
+}
+
+
+def test_wheels(image_type) {
+    sh (
+        script: """
+            ./docker/bash.sh --no-gpu tlcpack/package-${image_type} \
+                ./wheel/run_tests.sh
+        """,
+        label: "Test wheels for ${image_type}",
+    )
+}
+
+
+def upload_to_pypi() {
+    sh (
+        script: "sudo apt update && sudo apt install python3-pip --yes",
+        label: "Install python3-pip",
+    )
+    sh (
+        script: "python3 -m pip install twine",
+        label: "Install python package 'twine'",
+    )
+    sh (
+        script: "python3 -m twine upload tvm/python/repaired_wheels/*",
+        label: "Twine upload the repaired wheels to PyPI",
+    )
+}
+
+
+
+pipeline {
+    agent none
+
+    environment {
+        GPU = "none"
+        DISCORD_WEBHOOK = credentials("discord-webhook-url")
+        TWINE_NON_INTERACTIVE = 1
+        TWINE_REPOSITORY = "pypi"
+        TWINE_USERNAME = "__token__"
+        TWINE_PASSWORD = credentials("pypi-api-key")
+    }
+
+    options {
+        timeout(time: 1, unit: "HOURS")
+    }
+
+    parameters {
+        string(
+            name:"TLCPACK_GIT_REPO_URL",
+            defaultValue: "https://github.com/tlc-pack/tlcpack",
+            description: "URL for the tlcpack repository")
+        string(
+            name:"TLCPACK_CPU_TAG",
+            defaultValue: "2fddbe0",
+            description: "Tag for the Docker tlcpack CPU image")
+        string(
+            name:"TLCPACK_AARCH64_TAG",
+            defaultValue: "3e5b139d",
+            description: "Tag for the Docker tlcpack AArch64 image")
+        string(
+            name:"TVM_GIT_REV",
+            defaultValue: "main",
+            description: "Git revision to checkout.")
+        string(
+            name:"TVM_GIT_REPO_URL",
+            defaultValue: "https://github.com/apache/tvm",
+            description: "URL for the TVM repository")
+    }
+
+    stages {
+
+        stage("Setup workspace") {
+            agent {
+                node { label "CPU" }
+            }
+            steps {
+                cleanWs()
+                clone_tlcpack()
+                clone_tvm()
+                dir("tvm") {
+                    // Checkout the requested reference, so that we
+                    // can build images from branches/tags
+                    sh (
+                        script: "git checkout ${params.TVM_GIT_REV}",
+                        label: "Checkout requested reference",
+                    )
+                    script {
+                        TVM_CURRENT_SHORT_REF = sh (
+                            script: "git rev-parse --short HEAD",
+                            label: "Set current build display name",
+                            returnStdout: true
+                            ).trim()
+                        currentBuild.displayName = "tlcpack-${TVM_CURRENT_SHORT_REF}"
+                    } // script
+                } // dir(tvm)
+                sync_package()
+                stash (
+                    includes: "*/**",
+                    name: "tvm_workspace",
+                    allowEmpty: false,
+                )
+            }
+        } // stage(Setup workspace)
+
+        stage("Build and test wheels") {
+            parallel {
+
+                stage("CPU wheel") {
+                    agent {
+                        node { label "CPU" }
+                    }
+                    steps {
+                        cleanWs();
+                        unstash "tvm_workspace"
+                        script {
+                            pull_docker_image("${CPU_IMAGE}")
+                            build_wheels("${CPU_IMAGE}")
+                        } // script
+                        stash (
+                            includes: "tvm/python/repaired_wheels/**",
+                            name: "tvm_wheels_cpu",
+                            allowEmpty: false,
+                        )
+                    } // steps
+                } // stage(CPU wheel)
+
+                stage("arm wheel") {
+                    agent {
+                        node { label "ARM" }
+                    }
+                    steps {
+                        cleanWs();
+                        unstash "tvm_workspace"
+                        script {
+                            pull_docker_image("${AARCH64_IMAGE}")
+                            build_wheels("${AARCH64_IMAGE}")
+                        } //script
+                        stash (
+                            includes: "tvm/python/repaired_wheels/**",
+                            name: "tvm_wheels_aarch64",
+                            allowEmpty: false,
+                        )
+                    } // steps
+                } // stage(arm wheel)
+
+            } // parallel
+        } // stage: Build and test wheels
+
+        stage("upload wheels") {
+            when {
+                beforeAgent true
+                expression {
+                    echo "Deploy wheels to Pypi if Git revision is 'main'..."
+                    expression { return params.TVM_GIT_REV == 'main' }
+                }
+            }
+            agent {
+                node { label "CPU" }
+            }
+            steps {
+                cleanWs();
+                unstash "tvm_wheels_cpu"
+                unstash "tvm_wheels_aarch64"
+                sh (
+                    script: "find . -type f -name *.whl",
+                    label: "Find and list wheels",
+                )
+                upload_to_pypi()
+            }
+        }
+    } // stages
+
+    post {
+        success {
+            discordSend (
+                description: "New images published on PyPI: ${CPU_IMAGE}, ${AARCH64_IMAGE}.",
+                link: "https://pypi.org/project/apache-tvm/#history",
+                result: currentBuild.currentResult,
+                title: "${JOB_NAME}",
+                webhookURL: "${env.DISCORD_WEBHOOK}"
+            )
+        }
+        unsuccessful {
+            discordSend (
+                description: "Failed to generate tlcpack packages using TVM hash `${TVM_CURRENT_SHORT_REF}`. See logs at ${BUILD_URL}.",
+                link: "${BUILD_URL}",
+                result: currentBuild.currentResult,
+                title: "${JOB_NAME}",
+                webhookURL: "${env.DISCORD_WEBHOOK}"
+            )
+        }
+        always {
+            cleanup_docker_image("${AARCH64_IMAGE}")
+            cleanup_docker_image("${CPU_IMAGE}")
+            cleanWs();
+        }
+    } // post
+} // pipeline
