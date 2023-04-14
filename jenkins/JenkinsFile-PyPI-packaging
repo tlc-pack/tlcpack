@@ -113,7 +113,7 @@ def upload_to_pypi() {
 
 
 pipeline {
-    agent none
+    agent any
 
     environment {
         GPU = "none"
@@ -199,6 +199,7 @@ pipeline {
                         script {
                             pull_docker_image("${CPU_IMAGE}")
                             build_wheels("${CPU_IMAGE}")
+                            cleanup_docker_image("${CPU_IMAGE}")
                         } // script
                         stash (
                             includes: "tvm/python/repaired_wheels/**",
@@ -208,7 +209,7 @@ pipeline {
                     } // steps
                 } // stage(CPU wheel)
 
-                stage("arm wheel") {
+                stage("AArch64 wheel") {
                     agent {
                         node { label "ARM" }
                     }
@@ -218,6 +219,7 @@ pipeline {
                         script {
                             pull_docker_image("${AARCH64_IMAGE}")
                             build_wheels("${AARCH64_IMAGE}")
+                            cleanup_docker_image("${AARCH64_IMAGE}")
                         } //script
                         stash (
                             includes: "tvm/python/repaired_wheels/**",
@@ -257,7 +259,7 @@ pipeline {
     post {
         success {
             discordSend (
-                description: "New images published on PyPI: ${CPU_IMAGE}, ${AARCH64_IMAGE}.",
+                description: "New images published on PyPI: ${AARCH64_IMAGE}, ${CPU_IMAGE}.",
                 link: "https://pypi.org/project/apache-tvm/#history",
                 result: currentBuild.currentResult,
                 title: "${JOB_NAME}",
@@ -273,9 +275,7 @@ pipeline {
                 webhookURL: "${env.DISCORD_WEBHOOK}"
             )
         }
-        always {
-            cleanup_docker_image("${AARCH64_IMAGE}")
-            cleanup_docker_image("${CPU_IMAGE}")
+        cleanup {
             cleanWs();
         }
     } // post
