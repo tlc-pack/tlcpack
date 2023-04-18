@@ -97,10 +97,6 @@ def test_wheels(image_type) {
 
 def upload_to_pypi() {
     sh (
-        script: "sudo apt update && sudo apt install python3-pip --yes",
-        label: "Install python3-pip",
-    )
-    sh (
         script: "python3 -m pip install twine",
         label: "Install python package 'twine'",
     )
