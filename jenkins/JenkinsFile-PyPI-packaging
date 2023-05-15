@@ -109,7 +109,12 @@ def upload_to_pypi() {
 
 
 pipeline {
-    agent any
+
+    agent {
+        node {
+            label 'CPU-SPOT'
+        }
+    }
 
     environment {
         GPU = "none"
@@ -145,6 +150,14 @@ pipeline {
             name:"TVM_GIT_REPO_URL",
             defaultValue: "https://github.com/apache/tvm",
             description: "URL for the TVM repository")
+        booleanParam(
+            name:"BUILD_CPU",
+            defaultValue: false,
+            description: "Set to false if CPU packages are NOT required.")
+        booleanParam(
+            name:"BUILD_AARCH64",
+            defaultValue: true,
+            description: "Set to false if AArch64 packages are NOT required.")
     }
 
     stages {
@@ -186,6 +199,10 @@ pipeline {
             parallel {
 
                 stage("CPU wheel") {
+                    when {
+                        beforeAgent true
+                        expression { return params.BUILD_CPU }
+                    }
                     agent {
                         node { label "CPU" }
                     }
@@ -206,6 +223,10 @@ pipeline {
                 } // stage(CPU wheel)
 
                 stage("AArch64 wheel") {
+                    when {
+                        beforeAgent true
+                        expression { return params.BUILD_AARCH64 }
+                    }
                     agent {
                         node { label "ARM" }
                     }
@@ -255,7 +276,7 @@ pipeline {
     post {
         success {
             discordSend (
-                description: "New images published on PyPI: ${AARCH64_IMAGE}, ${CPU_IMAGE}.",
+                description: "New packages published on PyPI.",
                 link: "https://pypi.org/project/apache-tvm/#history",
                 result: currentBuild.currentResult,
                 title: "${JOB_NAME}",
