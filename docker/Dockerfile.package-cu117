@@ -1,0 +1,55 @@
+# Docker image: tlcpack/package-cu117
+
+FROM pytorch/manylinux-cuda117
+
+# install core
+COPY install/centos_install_core.sh /install/centos_install_core.sh
+RUN bash /install/centos_install_core.sh
+
+# install cmake
+COPY install/centos_install_cmake.sh /install/centos_install_cmake.sh
+RUN bash /install/centos_install_cmake.sh
+
+# build llvm
+COPY install/centos_build_llvm.sh /install/centos_build_llvm.sh
+RUN bash /install/centos_build_llvm.sh 10.0
+
+# upgrade patchelf due to the bug in patchelf 0.10
+# see details at https://stackoverflow.com/questions/61007071/auditwheel-repair-not-working-as-expected
+COPY install/centos_install_patchelf.sh /install/centos_install_patchelf.sh
+RUN bash /install/centos_install_patchelf.sh
+
+# Install Arm Ethos-N NPU driver stack
+COPY install/centos_install_arm_ethosn_driver_stack.sh /install/centos_install_arm_ethosn_driver_stack.sh
+RUN bash /install/centos_install_arm_ethosn_driver_stack.sh
+
+# Install Compute Library for Arm(r) Architecture (ACL)
+COPY install/centos_install_arm_compute_library.sh /install/centos_install_arm_compute_library.sh
+RUN bash /install/centos_install_arm_compute_library.sh
+
+# Install Conda
+COPY install/centos_install_conda.sh /install/centos_install_conda.sh
+RUN bash /install/centos_install_conda.sh
+ENV PATH=/opt/conda/bin:${PATH}
+
+# Install Python
+RUN conda create -n py37 python=3.7 -y
+RUN conda create -n py38 python=3.8 -y
+RUN conda create -n py39 python=3.9 -y
+RUN conda create -n py310 python=3.10 -y
+COPY install/centos_install_python_package.sh /install/centos_install_python_package.sh
+RUN bash /install/centos_install_python_package.sh
+
+COPY install/centos_install_auditwheel.sh /install/centos_install_auditwheel.sh
+RUN bash /install/centos_install_auditwheel.sh
+
+# Set default CUDA
+RUN rm /usr/local/cuda; ln -s /usr/local/cuda-11.7 /usr/local/cuda
+
+# Environment variables
+ENV PATH=/usr/local/cuda/bin:${PATH}
+ENV CPLUS_INCLUDE_PATH=/usr/local/cuda/include:${CPLUS_INCLUDE_PATH}
+ENV C_INCLUDE_PATH=/usr/local/cuda/include:${C_INCLUDE_PATH}
+ENV LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/compact:${LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/local/cuda/compact:${LD_LIBRARY_PATH}
+ENV AUDITWHEEL_PLAT=manylinux2014_x86_64
