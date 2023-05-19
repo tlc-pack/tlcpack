@@ -20,6 +20,9 @@ jobs:
           - cu111
           - cu113
           - cu116
+          - cu117
+          - cu118
+          - cu121
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
