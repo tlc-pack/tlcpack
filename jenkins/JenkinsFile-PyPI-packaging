@@ -20,19 +20,14 @@
 
 PACKAGE="pypi-nightly"
 PACKAGE_NAME="apache-tvm"
-CPU_IMAGE = "cpu:${params.TLCPACK_CPU_TAG}"
 AARCH64_IMAGE = "cpu_aarch64:${params.TLCPACK_AARCH64_TAG}"
-
-s3_bucket = "tvm-jenkins-artifacts-prod"
-s3_prefix = "tvm/pypi-packaging/${env.BUILD_NUMBER}"
-jenkins_scripts_root = "ci/scripts/jenkins"
 
 
 def cleanup_docker_image(image_type) {
     // Delete images created/tagged by previous steps.
     sh (
         script: "docker rmi -f tlcpack/package-${image_type}",
-        label: "Cleanup ${image_type} image"
+        label: "Cleanup ${image_type} image",
     )
 }
 
@@ -54,70 +49,12 @@ def clone_tvm() {
 }
 
 
-def upload_s3_stash(stash_name) {
-    sh(
-        script: """
-            ./${jenkins_scripts_root}/s3.py \
-              --action upload \
-              --bucket ${s3_bucket} \
-              --prefix ${s3_prefix}/${stash_name} \
-              --items ${stash_name}.tar.gz
-
-            if [ "\$?" -eq 0 ]; then
-                printf "INFO: files were stashed with the name '%s'.\n", ${stash_name}
-            else
-                printf "WARN: 0 files were specified for the stash.\n"
-                exit 1
-            fi
-        """,
-        label: 'Upload artefacts to S3',
-    )
-}
-
-
-def download_s3_stash(stash_name) {
-    sh(
-        script: """
-            ./${jenkins_scripts_root}/s3.py \
-              --action download \
-              --bucket ${s3_bucket} \
-              --prefix ${s3_prefix}/${stash_name}
-
-            if [ "\$?" -eq 0 ]; then
-                printf "INFO: stash '%s' download complete.\n", ${stash_name}
-            else
-                printf "Error: unable to download stash '%s'.\n", ${stash_name}
-                exit 1
-            fi
-
-        """,
-        label: 'Download artefacts from S3',
-    )
-}
-
-
 def pull_docker_image(image_type) {
     // The tag is expected to be passed as a Jenkins parameter
     sh (
         script: "docker pull tlcpack/package-${image_type}",
         label: "Pull 'package-${image_type}' from Docker Hub",
     )
-}
-
-
-def setup_workspace_from_stash() {
-    clone_tvm()
-    dir("tvm") {
-        download_s3_stash("tvm_workspace")
-    }
-    sh (
-        script: """
-            mv tvm/tvm_workspace.tar.gz . &&
-            rm -rf tvm
-            tar -xvf tvm_workspace.tar.gz
-        """,
-        label: "untar stash 'tvm_workspace'",
-   )
 }
 
 
@@ -142,6 +79,14 @@ def build_wheels(image_type) {
                 ./wheel/build_wheel_manylinux.sh --cuda ${env.GPU}
         """,
         label: "Build wheels on ${image_type}",
+    )
+}
+
+
+def list_wheels() {
+    sh (
+        script: "find . -type f -name *.whl",
+        label: "Find and list wheels",
     )
 }
 
@@ -172,11 +117,7 @@ def upload_to_pypi() {
 
 pipeline {
 
-    agent {
-        node {
-            label 'CPU-SPOT'
-        }
-    }
+    agent { node { label 'ARM-SPOT' } }
 
     environment {
         GPU = "none"
@@ -197,10 +138,6 @@ pipeline {
             defaultValue: "https://github.com/tlc-pack/tlcpack",
             description: "URL for the tlcpack repository")
         string(
-            name:"TLCPACK_CPU_TAG",
-            defaultValue: "2fddbe0",
-            description: "Tag for the Docker tlcpack CPU image")
-        string(
             name:"TLCPACK_AARCH64_TAG",
             defaultValue: "3e5b139d",
             description: "Tag for the Docker tlcpack AArch64 image")
@@ -212,22 +149,11 @@ pipeline {
             name:"TVM_GIT_REPO_URL",
             defaultValue: "https://github.com/apache/tvm",
             description: "URL for the TVM repository")
-        booleanParam(
-            name:"BUILD_CPU",
-            defaultValue: false,
-            description: "Set to false if CPU packages are NOT required.")
-        booleanParam(
-            name:"BUILD_AARCH64",
-            defaultValue: true,
-            description: "Set to false if AArch64 packages are NOT required.")
     }
 
     stages {
 
-        stage("Setup workspace") {
-            agent {
-                node { label "CPU-SPOT" }
-            }
+        stage("Package AArch64") {
             steps {
                 cleanWs()
                 clone_tlcpack()
@@ -249,118 +175,20 @@ pipeline {
                     } // script
                 } // dir(tvm)
                 sync_package()
-                sh (
-                    script: """
-                        tar --exclude ./tvm_workspace.tar -cf tvm_workspace.tar . && gzip tvm_workspace.tar
-                        mv tvm_workspace.tar.gz tvm/
-                    """,
-                    label: "Tarball the workspace",
-                )
-                dir("tvm") {
-                    upload_s3_stash("tvm_workspace")
-                }
-            }
-        } // stage(Setup workspace)
-
-        stage("Build and test wheels") {
-            parallel {
-
-                stage("CPU wheel") {
-                    when {
-                        beforeAgent true
-                        expression { return params.BUILD_CPU }
-                    }
-                    agent {
-                        node { label "CPU-SPOT" }
-                    }
-                    steps {
-                        cleanWs();
-                        setup_workspace_from_stash()
-                        script {
-                            pull_docker_image("${CPU_IMAGE}")
-                            build_wheels("${CPU_IMAGE}")
-                            cleanup_docker_image("${CPU_IMAGE}")
-                        } // script
-                        dir("tvm") {
-                            sh (
-                                script: "tar -czf tvm_wheels_cpu.tar.gz python/repaired_wheels",
-                                label: "Tarball the workspace",
-                            )
-                            upload_s3_stash("tvm_wheels_cpu")
-                        }
-                    } // steps
-                } // stage(CPU wheel)
-
-                stage("AArch64 wheel") {
-                    when {
-                        beforeAgent true
-                        expression { return params.BUILD_AARCH64 }
-                    }
-                    agent {
-                        node { label "ARM-SPOT" }
-                    }
-                    steps {
-                        cleanWs();
-                        setup_workspace_from_stash()
-                        script {
-                            pull_docker_image("${AARCH64_IMAGE}")
-                            build_wheels("${AARCH64_IMAGE}")
-                            cleanup_docker_image("${AARCH64_IMAGE}")
-                        } //script
-                        dir("tvm") {
-                            sh (
-                                script: "tar -czf tvm_wheels_aarch64.tar.gz python/repaired_wheels",
-                                label: "Tarball the workspace",
-                            )
-                            upload_s3_stash("tvm_wheels_aarch64")
-                        }
-                    } // steps
-                } // stage(arm wheel)
-
-            } // parallel
-        } // stage: Build and test wheels
-
-        stage("upload wheels") {
-            when {
-                beforeAgent true
-                expression {
-                    echo "Deploy wheels to Pypi if Git revision is 'main'..."
-                    expression { return params.TVM_GIT_REV == 'main' }
-                }
-            }
-            agent {
-                node { label "CPU-SPOT" }
-            }
-            steps {
-                cleanWs();
-                setup_workspace_from_stash()
-                dir("tvm") {
-                    script {
-                        if (params.BUILD_CPU) {
-                            download_s3_stash("tvm_wheels_cpu")
-                            sh "tar -xvf tvm_wheels_cpu.tar.gz --skip-old-files"
-                        }
-                    }
-                    script {
-                        if (params.BUILD_AARCH64) {
-                            download_s3_stash("tvm_wheels_aarch64")
-                            sh "tar -xvf tvm_wheels_aarch64.tar.gz --skip-old-files"
-                        }
-                    }
-                }
-                sh (
-                    script: "find . -type f -name *.whl",
-                    label: "Find and list wheels",
-                )
+                pull_docker_image("${AARCH64_IMAGE}")
+                build_wheels("${AARCH64_IMAGE}")
+                cleanup_docker_image("${AARCH64_IMAGE}")
+                list_wheels()
                 upload_to_pypi()
             }
-        }
+        } // stage(Package AArch64)
+
     } // stages
 
     post {
         success {
             discordSend (
-                description: "New packages published on PyPI.",
+                description: "New packages published on PyPI for ${AARCH64_IMAGE}.",
                 link: "https://pypi.org/project/apache-tvm/#history",
                 result: currentBuild.currentResult,
                 title: "${JOB_NAME}",
