@@ -377,14 +377,6 @@ pipeline {
   post {
     success {
 
-      // When the build is successful, trigger a validation build, using the tag just produced.
-      build job: 'daily-docker-image-validate',
-        wait: false,
-        propagate: false,
-        parameters: [
-          [$class: 'StringParameterValue', name: 'tlcpack_staging_tag', value: "${TVM_DOCKER_TAG}"]
-        ]
-
       discordSend description: "New images published on DockerHub with tag `${TVM_DOCKER_TAG}`. Use `docker pull tlcpackstaging/<image_type>:${TVM_DOCKER_TAG}` to download the images. Image types: `ci_arm`, `ci_cpu`, `ci_minimal`, `ci_gpu`, `ci_i386`, `ci_lint`, `ci_cortexm`, `ci_wasm`, `ci_hexagon`, `ci_riscv`.",
         link: "https://hub.docker.com/u/tlcpackstaging/",
         result: currentBuild.currentResult,
