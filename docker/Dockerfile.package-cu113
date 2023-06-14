@@ -12,7 +12,7 @@ RUN bash /install/centos_install_cmake.sh
 
 # build llvm
 COPY install/centos_build_llvm.sh /install/centos_build_llvm.sh
-RUN bash /install/centos_build_llvm.sh 10.0
+RUN bash /install/centos_build_llvm.sh 15.0
 
 # upgrade patchelf due to the bug in patchelf 0.10
 # see details at https://stackoverflow.com/questions/61007071/auditwheel-repair-not-working-as-expected
