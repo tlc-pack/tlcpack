@@ -125,7 +125,7 @@ pipeline {
         TWINE_NON_INTERACTIVE = 1
         TWINE_REPOSITORY = "pypi"
         TWINE_USERNAME = "__token__"
-        TWINE_PASSWORD = credentials("pypi-api-key")
+        TWINE_PASSWORD = credentials("pypi-api-token")
     }
 
     options {
