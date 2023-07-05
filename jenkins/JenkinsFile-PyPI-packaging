@@ -18,8 +18,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-PACKAGE="pypi-nightly"
-PACKAGE_NAME="apache-tvm"
 AARCH64_IMAGE = "cpu_aarch64:${params.TLCPACK_AARCH64_TAG}"
 
 
@@ -43,7 +41,7 @@ def clone_tlcpack() {
 
 def clone_tvm() {
     sh (
-        script: "git clone ${params.TVM_GIT_REPO_URL} --recursive",
+        script: "git clone --branch ${params.GIT_REF} --depth 1 ${params.TVM_GIT_REPO_URL} --recursive",
         label: "Clone TVM in to /tvm directory",
     )
 }
@@ -63,9 +61,9 @@ def sync_package() {
         script: """
             python3 common/sync_package.py \
               --cuda ${env.GPU} \
-              --package-name ${PACKAGE_NAME} \
+              --package-name ${params.PACKAGE_NAME} \
               --use-public-version \
-              ${PACKAGE}
+              ${params.PACKAGE}
         """,
         label: "Sync tlcpack package",
     )
@@ -121,11 +119,11 @@ pipeline {
 
     environment {
         GPU = "none"
-        DISCORD_WEBHOOK = credentials("discord-webhook-url")
+        DISCORD_WEBHOOK = credentials('discord-webhook-url')
         TWINE_NON_INTERACTIVE = 1
         TWINE_REPOSITORY = "pypi"
         TWINE_USERNAME = "__token__"
-        TWINE_PASSWORD = credentials("pypi-api-token")
+        TWINE_PASSWORD = credentials('pypi-api-token')
     }
 
     options {
@@ -134,19 +132,31 @@ pipeline {
 
     parameters {
         string(
-            name:"TLCPACK_GIT_REPO_URL",
+            name: "GIT_REF",
+            defaultValue: "v0.12.0",
+            description: "The branch to checkout and package")
+        string(
+            name: "PACKAGE",
+            defaultValue: "pypi",
+            description: "What type of package to create")
+        string(
+            name: "PACKAGE_NAME",
+            defaultValue: "apache-tvm",
+            description: "What name the package will be upload to PyPI with")
+        string(
+            name: "TLCPACK_GIT_REPO_URL",
             defaultValue: "https://github.com/tlc-pack/tlcpack",
             description: "URL for the tlcpack repository")
         string(
-            name:"TLCPACK_AARCH64_TAG",
+            name: "TLCPACK_AARCH64_TAG",
             defaultValue: "3e5b139d",
             description: "Tag for the Docker tlcpack AArch64 image")
         string(
-            name:"TVM_GIT_REV",
+            name: "TVM_GIT_REV",
             defaultValue: "main",
             description: "Git revision to checkout.")
         string(
-            name:"TVM_GIT_REPO_URL",
+            name: "TVM_GIT_REPO_URL",
             defaultValue: "https://github.com/apache/tvm",
             description: "URL for the TVM repository")
     }
@@ -159,12 +169,6 @@ pipeline {
                 clone_tlcpack()
                 clone_tvm()
                 dir("tvm") {
-                    // Checkout the requested reference, so that we
-                    // can build images from branches/tags
-                    sh (
-                        script: "git checkout ${params.TVM_GIT_REV}",
-                        label: "Checkout requested reference",
-                    )
                     script {
                         TVM_CURRENT_SHORT_REF = sh (
                             script: "git rev-parse --short HEAD",
