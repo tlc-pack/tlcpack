@@ -149,7 +149,7 @@ pipeline {
             description: "URL for the tlcpack repository")
         string(
             name: "TLCPACK_AARCH64_TAG",
-            defaultValue: "3e5b139d",
+            defaultValue: "2ac0ed7b8",
             description: "Tag for the Docker tlcpack AArch64 image")
         string(
             name: "TVM_GIT_REV",
