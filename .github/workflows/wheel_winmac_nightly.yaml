@@ -83,7 +83,7 @@ jobs:
         python setup.py bdist_wheel
     # Use system python instead of conda for upload
     - name: Wheel-Deploy
-      if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.TLCPACK_GITHUB_TOKEN }}
