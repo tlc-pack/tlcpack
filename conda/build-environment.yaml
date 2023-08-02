@@ -10,7 +10,7 @@ dependencies:
   - anaconda-client
   - git
   - llvmdev ==10.0.0
-  - numpy
+  - numpy >=1.17
   - pytest
   - cmake
   - bzip2
