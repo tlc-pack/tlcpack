@@ -68,7 +68,7 @@ outputs:
         - psutil
         - scipy
         - pytest
-        - {{ pin_compatible('numpy') }}
+        - {{ pin_compatible('numpy', lower_bound='1.17', max_pin='x.x') }}
         - {{ pin_subpackage(pkg_name + '-libs', exact=True) }}
 
 about:
