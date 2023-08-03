@@ -68,7 +68,7 @@ jobs:
       env:
         MACOSX_DEPLOYMENT_TARGET: 10.15
       run: |
-        python -m pip install setuptools Cython wheel
+        python -m pip install setuptools Cython==0.29.34 wheel
         cd tvm/python
         python setup.py bdist_wheel
     - uses: actions/setup-python@v2
@@ -78,7 +78,7 @@ jobs:
       env:
         MACOSX_DEPLOYMENT_TARGET: 10.15
       run: |
-        python -m pip install setuptools Cython wheel
+        python -m pip install setuptools Cython==0.29.34 wheel
         cd tvm/python
         python setup.py bdist_wheel
     # Use system python instead of conda for upload
